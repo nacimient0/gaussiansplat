@@ -3,6 +3,7 @@ import { Camera, GSplat, Environment } from '@playcanvas/react/components';
 import { OrbitControls } from '@playcanvas/react/scripts';
 import { useSplat, useAsset } from '@playcanvas/react/hooks';
 
+
 function SkyBoxEntity() {
     const { asset, loading, error } = useAsset('/cubemap-sunset.png', 'texture');
     if (loading) return <p>Loading skybox...</p>;

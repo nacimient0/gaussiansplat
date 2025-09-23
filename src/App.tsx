@@ -3,13 +3,23 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import GaussianSplat from "./pages/GaussianSplat";
 import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Connected from "./components/Connected";
 
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <Connected />
         <Routes>
-          <Route path="/" element={<GaussianSplat />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <GaussianSplat />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
         </Routes>
