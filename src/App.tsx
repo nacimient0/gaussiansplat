@@ -1,52 +1,137 @@
-import './App.css';
-import { Application, Entity } from '@playcanvas/react';
-import { Camera, GSplat, Environment } from '@playcanvas/react/components';
-import { OrbitControls } from '@playcanvas/react/scripts';
-import { useSplat, useAsset } from '@playcanvas/react/hooks';
+import "./App.css";
+import { Application, Entity } from "@playcanvas/react";
+import { Camera, GSplat, Environment } from "@playcanvas/react/components";
+import { OrbitControls } from "@playcanvas/react/scripts";
+import { useSplat, useAsset } from "@playcanvas/react/hooks";
+import { useEffect, useState } from "react";
 
-function SkyBoxEntity() {
-  const { asset, loading, error } = useAsset('/cubemap-sunset.png', 'texture');
-  if (loading) return <p>Loading skybox...</p>;
-  if (error) return <p>Error loading skybox: {error}</p>;
-  if (!asset) return null;
-  console.log('Skybox asset chargé:', asset);
+function Loader({ progress }: { progress: number }) {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    if (progress >= 1) {
+      const timeout = setTimeout(() => setVisible(false), 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [progress]);
+
+  if (!visible) return null;
 
   return (
-    <Entity name="skybox">
-      <Environment skybox={asset} skyboxIntensity={2} exposure={1} />
-    </Entity>
+    <div
+      style={{
+        backgroundImage: "url('bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        opacity: progress >= 1 ? 0 : 1,
+        transition: "opacity 1s ease",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        height: "100%",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        zIndex: 9999,
+      }}
+    >
+      {/* Loader circulaire */}
+      <div className="loader-circle" />
+
+      {/* Loader CSS */}
+      <style>
+        {`
+          .loader-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: inline-block;
+            border-top: 8px solid white;
+            border-right: 8px solid transparent;
+            animation: spin 1s linear infinite;
+            position: relative;
+            box-shadow: 0 0 2px black;
+          }
+          .loader-circle::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border-bottom: 8px solid red;
+            border-left: 8px solid transparent;
+            box-shadow: 0 0 2px black;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+
+      <p style={{ color: "white", marginTop: "20px", fontSize: "30px", textShadow: "0 0 20px black", textAlign: "center" }}>
+        Chargement en cours...
+      </p>
+
+      {/* Animation CSS */}
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+    </div>
   );
 }
-function SplatEntity() {
-  const { asset, loading, error } = useSplat("/scene2.ply");
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error loading splat: {error}</p>;
-  if (!asset) return null;
-  console.log('Asset chargé:', asset);
+
+function Scene() {
+  const sky = useAsset("/cubemap-sunset.jpg", "texture");
+  const splat = useSplat("/scene.ply");
+
+  const assets = [sky, splat];
+  const loadedCount = assets.filter((a) => !a.loading && a.asset).length;
+  const progress = loadedCount / assets.length;
 
   return (
-    <Entity name="splat" position={[0, 0, 0]} rotation={[180, -90, 0]}>
-      <GSplat asset={asset} />
-    </Entity>
-  );
-}
+    <>
+      <Loader progress={progress} />
 
-
-function App() {
-  return (
-    <Application>
-      <Entity name='camera' position={[-90, 60, 0]}>
+      <Entity name="camera" position={[-90, 60, 0]}>
         <Camera fov={65} />
         <OrbitControls
           distance={3.5}
           distanceMin={3}
           distanceMax={20}
           pitchAngleMin={15}
-          mouse={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6 }}
+          mouse={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
         />
       </Entity>
-      <SkyBoxEntity />
-      <SplatEntity />
+
+      {sky.asset && (
+        <Entity name="skybox">
+          <Environment skybox={sky.asset} skyboxIntensity={1} exposure={1} />
+        </Entity>
+      )}
+
+      {splat.asset && (
+        <Entity name="splat" position={[0, 0, 0]} rotation={[180, -90, 0]}>
+          <GSplat asset={splat.asset} />
+        </Entity>
+      )}
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Application>
+      <Scene />
     </Application>
   );
 }
