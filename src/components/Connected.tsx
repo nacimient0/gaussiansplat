@@ -11,14 +11,14 @@ export default function Connected() {
     };
 
     return (
-        <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
+        <header className="absolute right-0 bg-gray-800 text-white p-4 flex justify-between items-center">
             <nav>
                 {token ? (
                     <div className="flex items-center gap-4">
                         <span>Connecté en tant que <b>{userName}</b></span>
                         <button
                             onClick={handleLogout}
-                            className="px-3 py-1 bg-red-500 rounded hover:bg-red-600"
+                            className="cursor-pointer px-3 py-1 bg-red-500 rounded hover:bg-red-600"
                         >
                             Déconnexion
                         </button>
