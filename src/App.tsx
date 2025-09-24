@@ -106,10 +106,11 @@ function Scene() {
         <Camera fov={65} />
         <OrbitControls
           distance={3.5}
-          distanceMin={3}
+          distanceMin={2}
           distanceMax={20}
           pitchAngleMin={15}
           mouse={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
+          touch={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
         />
       </Entity>
 
