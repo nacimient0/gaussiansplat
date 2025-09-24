@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserName(null);
     };
 
-    if (loading) return null; // ← ne rien rendre tant qu'on récupère le token
+    if (loading) return null; 
 
     return (
         <AuthContext.Provider value={{ token, userId, userName, setToken, logout }}>
