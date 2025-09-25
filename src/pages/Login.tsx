@@ -63,7 +63,7 @@ export default function Login() {
                     />
                     {error && <p style={{ color: "red" }}>{error}</p>}
                     <div style={{ display: "flex", justifyContent: "center" }}>
-                        <button style={{ display: "flex", cursor: "pointer", backgroundColor: "#F59A00", padding: "10px 20px", borderRadius: "4px" }} type="submit">Se connecter</button>
+                        <button style={{ display: "flex", cursor: "pointer", backgroundColor: "#F59A00", padding: "10px 20px", borderRadius: "4px", textShadow: "0 0 5px black" }} type="submit">Se connecter</button>
                     </div>
                 </form>
             </div>

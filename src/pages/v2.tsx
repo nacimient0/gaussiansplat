@@ -36,10 +36,7 @@ function Loader({ progress }: { progress: number }) {
                 zIndex: 9999,
             }}
         >
-            {/* Loader circulaire */}
             <div className="loader-circle" />
-
-            {/* Loader CSS */}
             <style>
                 {`
           .loader-circle {
@@ -72,37 +69,38 @@ function Loader({ progress }: { progress: number }) {
         `}
             </style>
 
-            <p style={{ color: "white", marginTop: "20px", fontSize: "30px", textShadow: "0 0 20px black", textAlign: "center" }}>
+            <p
+                style={{
+                    color: "white",
+                    marginTop: "20px",
+                    fontSize: "30px",
+                    textShadow: "0 0 20px black",
+                    textAlign: "center",
+                }}
+            >
                 Chargement en cours...
             </p>
-
-            {/* Animation CSS */}
-            <style>
-                {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}
-            </style>
         </div>
     );
 }
 
 function Scene() {
-    const sky = useAsset("/V2/sunset-v2.jpg", "texture");
+    const sky = useAsset("/V1/sunset-v1.jpg", "texture");
     const splat = useSplat("/V2/skull.sog");
 
     const assets = [sky, splat];
     const loadedCount = assets.filter((a) => !a.loading && a.asset).length;
     const progress = loadedCount / assets.length;
 
+    const [activeCam, setActiveCam] = useState<"cam1" | "cam2">("cam1");
+
     return (
         <>
             <Loader progress={progress} />
 
-            <Entity name="camera" position={[-90, 60, 0]}>
-                <Camera fov={65} />
+            {/* Caméra 1 */}
+            <Entity name="camera1" position={[90, 60, 0]}>
+                <Camera fov={65} enabled={activeCam === "cam1"} />
                 <OrbitControls
                     distance={3.5}
                     distanceMin={2}
@@ -113,12 +111,55 @@ function Scene() {
                 />
             </Entity>
 
+            {/* Caméra 2 */}
+            <Entity name="camera2" position={[0, 150, 200]}>
+                <Camera fov={75} enabled={activeCam === "cam2"} />
+                <OrbitControls
+                    distance={5}
+                    distanceMin={2}
+                    distanceMax={50}
+                    pitchAngleMin={5}
+                    mouse={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
+                    touch={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
+                />
+            </Entity>
+
+            <div
+                style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 10000,
+                    position: "absolute",
+                    bottom: 25,
+                }}
+            >
+                <button
+                    onClick={() => setActiveCam(activeCam === "cam1" ? "cam2" : "cam1")}
+                    style={{
+                        padding: "10px 20px",
+                        fontSize: "16px",
+                        borderRadius: "8px",
+                        border: "none",
+                        cursor: "pointer",
+                        background: "#4caf50",
+                        color: "white",
+                        boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+                    }}
+                >
+                    {activeCam === "cam1" ? "Caméra 2" : "Caméra 1"}
+                </button>
+            </div>
+
+            {/* Skybox */}
             {sky.asset && (
                 <Entity name="skybox">
                     <Environment skybox={sky.asset} skyboxIntensity={1} exposure={1} />
                 </Entity>
             )}
 
+            {/* Splat */}
             {splat.asset && (
                 <Entity name="splat" position={[0, 0, 0]} rotation={[180, -90, 0]}>
                     <GSplat asset={splat.asset} />
