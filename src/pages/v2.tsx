@@ -85,10 +85,9 @@ function Loader({ progress }: { progress: number }) {
 }
 
 function Scene() {
-    const sky = useAsset("/V1/sunset-v1.jpg", "texture");
-    const splat = useSplat("/V2/skull.sog");
+    const splat = useSplat("/V2/scene-v2.ply");
 
-    const assets = [sky, splat];
+    const assets = [splat];
     const loadedCount = assets.filter((a) => !a.loading && a.asset).length;
     const progress = loadedCount / assets.length;
 
@@ -99,26 +98,28 @@ function Scene() {
             <Loader progress={progress} />
 
             {/* Caméra 1 */}
-            <Entity name="camera1" position={[90, 60, 0]}>
-                <Camera fov={65} enabled={activeCam === "cam1"} />
+            <Entity name="camera1" position={[-180, 0, 280]} >
+                <Camera fov={65} enabled={activeCam === "cam1"} clearColor="3C3C3C" />
                 <OrbitControls
-                    distance={3.5}
-                    distanceMin={2}
-                    distanceMax={20}
-                    pitchAngleMin={15}
+                    distance={2}
+                    distanceMin={1}
+                    distanceMax={5}
+                    pitchAngleMin={5}
+                    inertiaFactor={0.2}
                     mouse={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
                     touch={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
                 />
             </Entity>
 
             {/* Caméra 2 */}
-            <Entity name="camera2" position={[0, 150, 200]}>
-                <Camera fov={75} enabled={activeCam === "cam2"} />
+            <Entity name="camera2" position={[-180, 100, 0]}>
+                <Camera fov={65} enabled={activeCam === "cam2"} clearColor="3C3C3C" />
                 <OrbitControls
-                    distance={5}
-                    distanceMin={2}
-                    distanceMax={50}
+                    distance={2}
+                    distanceMin={1}
+                    distanceMax={5}
                     pitchAngleMin={5}
+                    inertiaFactor={0.2}
                     mouse={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
                     touch={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
                 />
@@ -130,7 +131,7 @@ function Scene() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    zIndex: 10000,
+                    zIndex: 9998,
                     position: "absolute",
                     bottom: 25,
                 }}
@@ -151,13 +152,6 @@ function Scene() {
                     {activeCam === "cam1" ? "Caméra 2" : "Caméra 1"}
                 </button>
             </div>
-
-            {/* Skybox */}
-            {sky.asset && (
-                <Entity name="skybox">
-                    <Environment skybox={sky.asset} skyboxIntensity={1} exposure={1} />
-                </Entity>
-            )}
 
             {/* Splat */}
             {splat.asset && (
