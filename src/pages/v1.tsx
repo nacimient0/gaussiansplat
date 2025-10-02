@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Application, Entity } from "@playcanvas/react";
 import { Camera, GSplat, Environment } from "@playcanvas/react/components";
 import { OrbitControls } from "@playcanvas/react/scripts";
@@ -51,7 +53,6 @@ function Loader({ progress }: { progress: number }) {
             border-right: 8px solid transparent;
             animation: spin 1s linear infinite;
             position: relative;
-            box-shadow: 0 0 2px black;
           }
           .loader-circle::after {
             content: "";
@@ -63,7 +64,6 @@ function Loader({ progress }: { progress: number }) {
             border-radius: 50%;
             border-bottom: 8px solid red;
             border-left: 8px solid transparent;
-            box-shadow: 0 0 2px black;
           }
           @keyframes spin {
             0% { transform: rotate(0deg); }

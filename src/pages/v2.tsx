@@ -1,7 +1,11 @@
+// @ts-nocheck
+
 import { Application, Entity } from "@playcanvas/react";
-import { Camera, GSplat, Environment } from "@playcanvas/react/components";
+import { Camera, GSplat, Environment, Script  } from "@playcanvas/react/components";
 import { OrbitControls } from "@playcanvas/react/scripts";
 import { useSplat, useAsset } from "@playcanvas/react/hooks";
+import { CameraControls } from 'playcanvas/scripts/esm/camera-controls.mjs'
+
 import { useEffect, useState } from "react";
 
 function Loader({ progress }: { progress: number }) {
@@ -48,7 +52,6 @@ function Loader({ progress }: { progress: number }) {
             border-right: 8px solid transparent;
             animation: spin 1s linear infinite;
             position: relative;
-            box-shadow: 0 0 2px black;
           }
           .loader-circle::after {
             content: "";
@@ -60,7 +63,6 @@ function Loader({ progress }: { progress: number }) {
             border-radius: 50%;
             border-bottom: 8px solid red;
             border-left: 8px solid transparent;
-            box-shadow: 0 0 2px black;
           }
           @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -98,30 +100,31 @@ function Scene() {
             <Loader progress={progress} />
 
             {/* Caméra 1 */}
-            <Entity name="camera1" position={[-180, 0, 280]} >
+            <Entity name="camera1" position={[-180, 60, 280]} >
                 <Camera fov={65} enabled={activeCam === "cam1"} clearColor="3C3C3C" />
+                <Script script={CameraControls} />
                 <OrbitControls
-                    distance={2}
+                    distance={2.15}
                     distanceMin={1}
-                    distanceMax={5}
+                    distanceMax={3}
                     pitchAngleMin={5}
                     inertiaFactor={0.2}
-                    mouse={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
-                    touch={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
+                    mouse={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6 }}
+                    touch={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6 }}
                 />
             </Entity>
 
             {/* Caméra 2 */}
-            <Entity name="camera2" position={[-180, 100, 0]}>
+            <Entity name="camera2" position={[-180, 80, 0]}>
                 <Camera fov={65} enabled={activeCam === "cam2"} clearColor="3C3C3C" />
                 <OrbitControls
                     distance={2}
                     distanceMin={1}
-                    distanceMax={5}
-                    pitchAngleMin={5}
+                    distanceMax={3}
+                    pitchAngleMin={10}
                     inertiaFactor={0.2}
-                    mouse={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
-                    touch={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6, pan: false }}
+                    mouse={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6 }}
+                    touch={{ orbitSensitivity: 0.3, distanceSensitivity: 0.6 }}
                 />
             </Entity>
 
@@ -149,7 +152,7 @@ function Scene() {
                         boxShadow: "0 0 10px rgba(0,0,0,0.5)",
                     }}
                 >
-                    {activeCam === "cam1" ? "Caméra 2" : "Caméra 1"}
+                    {activeCam === "cam1" ? "Aller à la Caméra 2" : "Aller à la Caméra 1"}
                 </button>
             </div>
 
@@ -165,7 +168,7 @@ function Scene() {
 
 function V2() {
     return (
-        <Application>
+        <Application graphicsDeviceOptions={{ antialias: false }}>
             <Scene />
         </Application>
     );

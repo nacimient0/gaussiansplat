@@ -13,7 +13,7 @@ function App() {
       <Router>
         <Connected />
         <Routes>
-          {/* <Route
+          <Route
             path="/v1"
             element={
               <ProtectedRoute>
@@ -28,14 +28,12 @@ function App() {
                 <V2 />
               </ProtectedRoute>
             }
-          /> */}
-          <Route path="/v1" element={<V1 />} />
-          <Route path="/v2" element={<V2 />} />
+          />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
         </Routes>
       </Router>
-    </AuthProvider>
+    </AuthProvider >
   );
 }
 
