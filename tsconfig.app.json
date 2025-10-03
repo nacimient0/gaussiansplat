@@ -22,5 +22,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "gg.js"]
+  "include": ["src", "gg.js", "node_modules/playcanvas/scripts/esm/lerpAndSlerpCamera.mjs"]
 }
