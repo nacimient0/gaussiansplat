@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 
+import * as pc from "playcanvas";
 import { Application, Entity } from "@playcanvas/react";
 import { Camera, GSplat, Script, Render } from "@playcanvas/react/components";
 import { OrbitControls, AutoRotator } from "@playcanvas/react/scripts";
@@ -11,16 +12,13 @@ import { Grid } from "@playcanvas/react/scripts";
 /* ------------------------------ Loader ------------------------------ */
 function Loader({ progress }: { progress: number }) {
     const [visible, setVisible] = useState(true);
-
     useEffect(() => {
         if (progress >= 1) {
             const timeout = setTimeout(() => setVisible(false), 500);
             return () => clearTimeout(timeout);
         }
     }, [progress]);
-
     if (!visible) return null;
-
     return (
         <div
             style={{
@@ -70,55 +68,35 @@ function Loader({ progress }: { progress: number }) {
     );
 }
 
-/* ------------------------ GSplat Wrapper (safe enable) ------------------------ */
+/* ------------------------ GSplat Wrapper ------------------------ */
 const GSplatWrapper: React.FC<{ asset: any }> = ({ asset }) => {
     const entityRef = useRef<any>(null);
-
     useLayoutEffect(() => {
-        if (entityRef.current) {
-            entityRef.current.enabled = false;
-        }
+        if (entityRef.current) entityRef.current.enabled = false;
     }, []);
-
     useEffect(() => {
         if (asset?.resource && entityRef.current) {
-            const entity = entityRef.current;
-            const id = requestAnimationFrame(() => {
-                entity.enabled = true;
-            });
+            const id = requestAnimationFrame(() => { entityRef.current.enabled = true; });
             return () => cancelAnimationFrame(id);
         }
     }, [asset]);
-
     return (
         <>
-            <Entity
-                ref={entityRef}
-                position={[0, 0, 0]}
-                rotation={[0, 0, 180]}
-                enabled={false}
-            >
+            <Entity ref={entityRef} position={[0, 0, 0]} rotation={[0, 0, 180]} enabled={false}>
                 <GSplat asset={asset} />
-
             </Entity>
-            <Entity
-                name="marker"
-                position={[-1, 0.25, -1]}
-                rotation={[0, 0, 0]}
-                scale={[0.05, 0.05, 0.05]}
-                onPointerDown={() => window.open("https://asylum.fr", "_blank")}
-            >
-                <Render type='sphere' width={0.1} height={0.1} depth={0.1} />
+            <Entity name="marker" position={[-1, 0.25, -1]} rotation={[0, 0, 0]} scale={[0.05, 0.05, 0.05]}
+                onPointerDown={() => window.open("https://asylum.fr", "_blank")}>
+                <Render type="sphere" width={0.1} height={0.1} depth={0.1} />
             </Entity>
         </>
     );
 };
 
-/* ------------------------ Scene Loading ------------------------ */
+/* ------------------------ Scene Loader ------------------------ */
 const SplatScene: React.FC = React.memo(() => {
     const { asset } = useSplat("/V2/scene-v2.sog");
     const [progress, setProgress] = useState(0);
-
     useEffect(() => {
         if (!asset) return;
         if (asset.resource) setProgress(1);
@@ -128,7 +106,6 @@ const SplatScene: React.FC = React.memo(() => {
             return () => asset.off("load", onLoad);
         }
     }, [asset]);
-
     if (!asset) return <Loader progress={0} />;
     return (
         <>
@@ -139,65 +116,127 @@ const SplatScene: React.FC = React.memo(() => {
 });
 SplatScene.displayName = "SplatScene";
 
+/* ------------------------ Hook: Lerp position (state) ------------------------ */
+function useLerpPositionState(
+    target: number[],
+    setPosition: (p: number[]) => void,
+    setIsLerping: (b: boolean) => void,
+    speed = 5
+) {
+    useEffect(() => {
+        if (!target || target.length !== 3) return;
+        let frame = 0;
+        let rafId: number | null = null;
+        setIsLerping(true);
+
+        const animate = () => {
+            setPosition((current) => {
+                const safe = Array.isArray(current) && current.length === 3 ? current : [0, 0, 0];
+                const curr = new pc.Vec3(safe[0], safe[1], safe[2]);
+                const tgt = new pc.Vec3(target[0], target[1], target[2]);
+                const alpha = Math.min(0.12 * (speed / 5), 0.35);
+                const next = curr.lerp(tgt, alpha);
+                const arr: number[] = [next.x, next.y, next.z];
+                const dist = next.distance(tgt);
+
+                if (dist > 0.01 && frame < 240) {
+                    frame++;
+                    rafId = requestAnimationFrame(animate);
+                    return arr;
+                } else {
+                    setIsLerping(false);
+                    return [tgt.x, tgt.y, tgt.z];
+                }
+            });
+        };
+
+        rafId = requestAnimationFrame(animate);
+        return () => { if (rafId) cancelAnimationFrame(rafId); };
+    }, [target[0], target[1], target[2], speed]);
+}
+
+/* -------- Hook: Sync position + orientation (lookAt) vers PlayCanvas -------- */
+function useSyncCameraTransform(
+    cameraRef: any,
+    cameraPosition: number[],
+    lookAtTarget: number[] // point à regarder
+) {
+    useEffect(() => {
+        const cam = cameraRef.current;
+        if (!cam) return;
+        if (!cameraPosition || cameraPosition.length !== 3) return;
+
+        const pos = new pc.Vec3(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+        cam.setLocalPosition(pos);
+
+        if (lookAtTarget && lookAtTarget.length === 3) {
+            // oriente la caméra vers le point choisi
+            const tgt = new pc.Vec3(lookAtTarget[0], lookAtTarget[1], lookAtTarget[2]);
+            cam.lookAt(tgt);
+        }
+
+        cam.syncHierarchy?.();
+    }, [cameraRef, cameraPosition[0], cameraPosition[1], cameraPosition[2],
+        lookAtTarget?.[0], lookAtTarget?.[1], lookAtTarget?.[2]]);
+}
+
 /* ------------------------ Main Component ------------------------ */
 export default function V2() {
-    const orbitRef = useRef(null);
-    console.log(orbitRef)
-    const cameraRef = useRef(null);
+    const orbitRef = useRef<any>(null);
+    const cameraRef = useRef<any>(null);
 
-    const [showBackView, setShowBackView] = useState(false);
+    // Positions très différentes pour vérifier visuellement
+    const position1 = [50, 10, 10];
+    const position2 = [-50, 10, 10];
+
+    // Point d’intérêt que la caméra regarde
+    const focus: number[] = [0, 5, 0]; // ajuste si besoin
+
+    const [cameraPosition, setCameraPosition] = useState<number[]>(() => [...position1]);
+    const [targetView, setTargetView] = useState<number[]>(() => [...position1]);
+    const [viewIndex, setViewIndex] = useState(0);
     const [autoRotate, setAutoRotate] = useState(false);
+    const [isLerping, setIsLerping] = useState(false);
 
-    const lastUserViewRef = useRef({
-        position: [4, 1, 4],
-        rotation: [0, 0, 0],
-    });
+    // Lerp du state
+    useLerpPositionState(targetView, setCameraPosition, setIsLerping, 5);
 
-    const backView = {
-        position: [0, 1.5, -4],
-        rotation: [0, 0, 0],
-    };
+    // Sync position + orientation vers PlayCanvas
+    useSyncCameraTransform(cameraRef, cameraPosition, focus);
 
-    const transform = showBackView ? backView : lastUserViewRef.current;
-
-    const toggleView = () => {
-        if (!showBackView && cameraRef.current) {
-            lastUserViewRef.current = {
-                position: cameraRef.current.getLocalPosition().toArray(),
-                rotation: cameraRef.current.getLocalEulerAngles().toArray(),
-            };
-        }
-        setShowBackView(!showBackView);
-    };
-
-    // ✅ Splat scène fixée, pas de re-render
-    const splatOnce = useMemo(() => <SplatScene />, []);
-
+    // Focus initial pour OrbitControls (facultatif)
     useEffect(() => {
         const id = requestAnimationFrame(() => {
             if (orbitRef.current?.focus) {
-                orbitRef.current.focus(new pc.Vec3(0, 0, 0));
+                orbitRef.current.focus(new pc.Vec3(...focus));
             }
         });
         return () => cancelAnimationFrame(id);
     }, []);
 
+    const toggleView = () => {
+        const nextIndex = viewIndex === 0 ? 1 : 0;
+        const nextTarget = nextIndex === 0 ? position1 : position2;
+        setViewIndex(nextIndex);
+        setTargetView([...nextTarget]);
+    };
 
+    const splatOnce = useMemo(() => <SplatScene />, []);
 
     return (
         <>
             <Application graphicsDeviceOptions={{ antialias: false }}>
-                {/* Camera */}
-                <Entity name="camera" {...transform} ref={cameraRef}>
+                <Entity name="camera" ref={cameraRef} position={cameraPosition}>
                     <Camera fov={65} />
-                    {!showBackView && (
+                    {/* Désactive OrbitControls pendant le lerp pour ne pas écraser la position */}
+                    {!isLerping && viewIndex === 0 && (
                         <>
                             <OrbitControls
                                 ref={orbitRef}
                                 inertiaFactor={0.07}
                                 distanceMin={1}
-                                distanceMax={10}
-                                pitchAngleMin={0}
+                                distanceMax={50}
+                                pitchAngleMin={5}
                                 pitchAngleMax={90}
                             />
                             {autoRotate && (
@@ -213,35 +252,32 @@ export default function V2() {
                     )}
                 </Entity>
 
-
-                {/* Grid */}
                 <Entity>
                     <Script script={Grid} />
                 </Entity>
 
-                {/* GSplat */}
                 {splatOnce}
-
             </Application>
 
             {/* UI */}
             <div style={{ position: "absolute", bottom: 20, left: 20, zIndex: 9999 }}>
                 <div style={buttonStyle} onClick={toggleView}>
-                    {showBackView ? "ORBIT VIEW" : "REAR VIEW"}
+                    {viewIndex === 0 ? "ALLER VERS [-50,10,10]" : "RETOUR VERS [50,10,10]"}
                 </div>
-                {!showBackView && (
-                    <div
-                        style={{ ...buttonStyle, marginTop: 10 }}
-                        onClick={() => setAutoRotate((p) => !p)}
-                    >
+                {viewIndex === 0 && (
+                    <div style={{ ...buttonStyle, marginTop: 10 }} onClick={() => setAutoRotate((p) => !p)}>
                         {autoRotate ? "STOP ROTATION" : "LANCER ROTATION"}
                     </div>
                 )}
+                <div style={{ marginTop: 10, color: "white" }}>
+                    pos = [{cameraPosition.map((n) => n.toFixed(2)).join(", ")}] {isLerping ? "⏳" : "✅"}
+                </div>
             </div>
         </>
     );
 }
 
+/* ------------------------ UI Button style ------------------------ */
 const buttonStyle: React.CSSProperties = {
     background: "rgba(0,0,0,0.6)",
     color: "white",
