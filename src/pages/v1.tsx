@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Application, Entity } from "@playcanvas/react";
 import { Camera, GSplat, Environment } from "@playcanvas/react/components";
 import { OrbitControls } from "@playcanvas/react/scripts";

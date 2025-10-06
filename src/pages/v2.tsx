@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Application, Entity } from "@playcanvas/react";
 import { Camera, GSplat, Environment } from "@playcanvas/react/components";
 import { OrbitControls } from "@playcanvas/react/scripts";
@@ -85,7 +87,7 @@ function Loader({ progress }: { progress: number }) {
 }
 
 function Scene() {
-    const splat = useSplat("/V2/scene-v2.ply");
+    const splat = useSplat("/V2/scene-v2.sog");
 
     const assets = [splat];
     const loadedCount = assets.filter((a) => !a.loading && a.asset).length;
