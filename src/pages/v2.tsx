@@ -58,7 +58,6 @@ const SplatScene: React.FC = React.memo(() => {
   return (
     <>
       <Loader progress={progress} />
-
       {/* repère au centre */}
       <Entity name="originMarker" position={[0, 0, 0]} scale={[0.1, 0.1, 0.1]}>
         <Render type="box" width={0.1} height={0.1} depth={0.1} />
@@ -72,58 +71,54 @@ const SplatScene: React.FC = React.memo(() => {
 });
 SplatScene.displayName = "SplatScene";
 
-/* ------------------------ Script: LookAtTarget (simple) ------------------------ */
-const LookAtTarget = (pcLib: typeof pc) => {
-  class LookAtTarget extends pcLib.ScriptType {
-    static attributes = {
-      x: { type: "number", default: 0 },
-      y: { type: "number", default: 0 },
-      z: { type: "number", default: 0 }
-    };
-    update() {
-      this.entity.lookAt(this.x, this.y, this.z);
-    }
-  }
-  return LookAtTarget;
-};
-
 /* ------------------------ Main ------------------------ */
 export default function V2() {
   const cameraRef = useRef<any>(null);
   const orbitRef = useRef<any>(null);
 
-  // A ↔ B (positions de démo)
+  // Références A / B
   const POS_A: [number, number, number] = [-1.25, 1.0, 0.25];
   const POS_B: [number, number, number] = [-1.25, 0.1, 1.5];
 
-  // durée du lerp (doit matcher la prop du script)
+  // Durée de l’interp
   const DURATION = 5.0;
 
-  // UI state
+  // Etat : on démarre SUR B
+  const [at, setAt] = useState<"A" | "B">("B");
   const [trigger, setTrigger] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [autoRotate, setAutoRotate] = useState(false);
 
-  // Lancer l’interp A↔B (on coupe autorotate pendant le lerp)
-  const toggleLerp = () => {
-    setAutoRotate(false);
-    setTrigger(t => t + 1);
-    setIsAnimating(true);
-    setTimeout(() => setIsAnimating(false), Math.round(DURATION * 1000) + 50);
-  };
-
-  // Focus initial pour OrbitControls
+  // Init orientation (regarder le centre) et position initiale
   useEffect(() => {
-    const id = requestAnimationFrame(() => {
-      if (orbitRef.current?.focus) {
-        orbitRef.current.focus(new pc.Vec3(0, 0, 0));
-      }
-    });
-    return () => cancelAnimationFrame(id);
+    const e = cameraRef.current as pc.Entity | null;
+    if (!e) return;
+    // start @ B
+    e.setPosition(new pc.Vec3(...POS_B));
+    e.lookAt(...LOOK_AT);
+    e.syncHierarchy?.();
   }, []);
 
-  // DEBUG : log position cam pendant l’anim
+  // Lancer le lerp vers l’autre point
+  const toggleLerp = () => {
+    setAutoRotate(false);
+    setTrigger(t => t + 1);     // déclenche le script
+    setIsAnimating(true);
+
+    // à la fin : on dit qu’on est “à l’autre point”, on réaligne OrbitControls
+    setTimeout(() => {
+      setIsAnimating(false);
+      setAt(prev => (prev === "B" ? "A" : "B"));
+      // réaligner OrbitControls pour qu’ils ne “cassent” pas la pose
+      if (orbitRef.current?.focus) {
+        orbitRef.current.focus(new pc.Vec3(...LOOK_AT));
+      }
+    }, Math.round(DURATION * 1000) + 50);
+  };
+
+  // DEBUG : log la position pendant l’anim (optionnel)
   useEffect(() => {
+    if (!isAnimating) return;
     let raf: number | null = null;
     let frame = 0;
     const tick = () => {
@@ -137,7 +132,7 @@ export default function V2() {
         raf = requestAnimationFrame(tick);
       }
     };
-    if (isAnimating) raf = requestAnimationFrame(tick);
+    raf = requestAnimationFrame(tick);
     return () => { if (raf) cancelAnimationFrame(raf); };
   }, [isAnimating]);
 
@@ -146,14 +141,16 @@ export default function V2() {
   return (
     <>
       <Application graphicsDeviceOptions={{ antialias: false }}>
-        {/* Points de référence A / B */}
+        {/* Points A / B */}
         <Entity name="pointA" position={POS_A} />
         <Entity name="pointB" position={POS_B} />
 
-        {/* Caméra ENFANT du pivot */}
-        <Entity name="camera" ref={cameraRef} position={POS_A}>
+        {/* Caméra (démarre sur B) */}
+        <Entity name="camera" ref={cameraRef} position={POS_B}>
           <Camera fov={62} />
-          {autoRotate && (
+
+          {/* Auto-rotate libre (désactivé pendant anim) */}
+          {autoRotate && !isAnimating && (
             <Script
               script={AutoRotator}
               speed={20}
@@ -163,7 +160,7 @@ export default function V2() {
             />
           )}
 
-          {/* OrbitControls : quand pas d’auto-rotation et pas de lerp */}
+          {/* OrbitControls quand pas d’auto-rotate et pas de lerp */}
           {!autoRotate && !isAnimating && (
             <OrbitControls
               ref={orbitRef}
@@ -176,17 +173,19 @@ export default function V2() {
             />
           )}
 
-          {/* Lerp A↔B : on vise (0,0,0) pendant l’anim */}
+          {/* Lerp A↔B : on regarde (0,0,0) pendant l’anim */}
           <Script
             script={LerpAndSlerpCamera}
             pointAName="pointA"
             pointBName="pointB"
             duration={DURATION}
             trigger={trigger}
-            lookAtX={0}
-            lookAtY={0}
-            lookAtZ={0}
+            lookAtX={0} lookAtY={0} lookAtZ={0}
+            fovA={80}
+            fovB={80}
+            fovMid={80}   // zoom max à mi-parcours
           />
+
         </Entity>
 
         {splatOnce}
@@ -195,13 +194,13 @@ export default function V2() {
       {/* UI */}
       <div style={{ position: "absolute", bottom: 20, left: 20, zIndex: 9999 }}>
         <div style={buttonStyle} onClick={toggleLerp}>
-          {`Aller vers ${trigger % 2 === 0 ? "[B]" : "[A]"} ${isAnimating ? "⏳" : ""}`}
+          {`Cam actuelle: ${at} — Aller vers ${at === "B" ? "A" : "B"} ${isAnimating ? "⏳" : ""}`}
         </div>
 
         <div
           style={{ ...buttonStyle, marginTop: 10 }}
           onClick={() => setAutoRotate(p => !p)}
-          title="Orbiter autour de (0,0,0)"
+          title="Rotation libre (yaw/pitch) sur place"
         >
           {autoRotate ? "STOP ROTATION" : "LANCER ROTATION"}
         </div>
