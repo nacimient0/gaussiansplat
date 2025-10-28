@@ -78,7 +78,7 @@ export class LerpAndSlerpCamera extends Script {
       this._lastTrigger = this.trigger ?? 0;
       this._time = 0;
       this._active = true;
-      this._forward = !this._forward; // alterne la direction
+      this._forward = !this._forward;
       console.log(
         `[LerpAndSlerpCamera] 🚀 Démarrage du lerp ${this._forward ? "A→B" : "B→A"} (durée ${this.duration}s)`
       );

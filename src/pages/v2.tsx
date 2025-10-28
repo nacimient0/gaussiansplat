@@ -3,9 +3,9 @@
 
 import * as pc from "playcanvas";
 import { Application, Entity } from "@playcanvas/react";
-import { Camera, GSplat, Script, Render } from "@playcanvas/react/components";
+import { Camera, GSplat, Script, Environment } from "@playcanvas/react/components";
 import { OrbitControls } from "@playcanvas/react/scripts";
-import { useSplat } from "@playcanvas/react/hooks";
+import { useSplat, useAsset } from "@playcanvas/react/hooks";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import LerpAndSlerpCamera from "../scripts/LerpAndSlerpCamera";
 import { SimpleAutoRotator } from "../scripts/SimpleAutoRotator";
@@ -52,6 +52,7 @@ function Loader({ progress }) {
 /* ------------------------ Splat Scene ------------------------ */
 const SplatScene = React.memo(() => {
   const { asset, loading } = useSplat("/V2/scene-v2.sog");
+  const sky = useAsset("/V2/bg-scene.webp", "texture");
   const progress = loading ? 0 : 1;
 
   if (!asset) return <Loader progress={progress} />;
@@ -59,26 +60,27 @@ const SplatScene = React.memo(() => {
   return (
     <>
       <Loader progress={progress} />
-      <Entity name="originMarker" position={[0, 0, 0]} scale={[0.1, 0.1, 0.1]}>
-        <Render type="box" width={0.1} height={0.1} depth={0.1} />
-      </Entity>
+
 
       <Entity name="splat" position={[0, 0, 0]} rotation={[180, -90, 0]}>
         <GSplat asset={asset} />
       </Entity>
+     <Entity name="skybox">
+          <Environment skybox={sky.asset} skyboxIntensity={1} exposure={1} />
+        </Entity>
     </>
   );
 });
 SplatScene.displayName = "SplatScene";
-
 /* ------------------------ Main ------------------------ */
 export default function V2() {
   const cameraRef = useRef(null);
   const orbitRef = useRef(null);
 
   // Références A / B
-  const POS_A = [-1.25, 1.0, 0.25];
-  const POS_B = [-1.35, 0.15, 1.8];
+  const POS_A = [-1.35, 0.15, 1.8];
+  const POS_B = [-3.5, 1.75, 0];
+
 
   const DURATION = 5.0;
 
@@ -98,22 +100,24 @@ export default function V2() {
 
   const splatOnce = useMemo(() => <SplatScene />, []);
 
+
   return (
     <>
       <Application graphicsDeviceOptions={{ antialias: false }}>
         <Entity name="pointA" position={POS_A} />
         <Entity name="pointB" position={POS_B} />
 
-        <Entity name="camera" ref={cameraRef} position={POS_B}>
-          <Camera fov={70} />
 
-          {/* OrbitControls toujours actif */}
+        <Entity name="camera" ref={cameraRef} position={POS_B}>
+
+          <Camera fov={58} />
+
           <OrbitControls
             ref={orbitRef}
-            distance={2}
+            distance={2.25}
             distanceMin={0.25}
-            distanceMax={5}
-            pitchAngleMin={2}
+            distanceMax={2.25}
+            pitchAngleMin={10}
             pitchAngleMax={50}
             inertiaFactor={0.15}
             enabled={!autoRotate}
