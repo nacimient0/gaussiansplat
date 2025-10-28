@@ -10,6 +10,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import LerpAndSlerpCamera from "../scripts/LerpAndSlerpCamera";
 import { SimpleAutoRotator } from "../scripts/SimpleAutoRotator";
 
+
 /* ------------------------------ Loader ------------------------------ */
 function Loader({ progress }) {
   const [visible, setVisible] = useState(true);
@@ -65,9 +66,9 @@ const SplatScene = React.memo(() => {
       <Entity name="splat" position={[0, 0, 0]} rotation={[180, -90, 0]}>
         <GSplat asset={asset} />
       </Entity>
-     <Entity name="skybox">
-          <Environment skybox={sky.asset} skyboxIntensity={1} exposure={1} />
-        </Entity>
+      <Entity name="skybox">
+        <Environment skybox={sky.asset} skyboxIntensity={1.25} exposure={1} />
+      </Entity>
     </>
   );
 });
@@ -107,11 +108,8 @@ export default function V2() {
         <Entity name="pointA" position={POS_A} />
         <Entity name="pointB" position={POS_B} />
 
-
         <Entity name="camera" ref={cameraRef} position={POS_B}>
-
           <Camera fov={58} />
-
           <OrbitControls
             ref={orbitRef}
             distance={2.25}
@@ -124,7 +122,6 @@ export default function V2() {
             mouse={{ pan: false }}
             touch={{ pan: false }}
           />
-
           {autoRotate && (
             <Script
               script={SimpleAutoRotator}
@@ -135,8 +132,6 @@ export default function V2() {
               startFadeInTime={0}
             />
           )}
-
-          {/* Lerp A↔B */}
           <Script
             script={LerpAndSlerpCamera}
             pointAName="pointA"
@@ -151,6 +146,7 @@ export default function V2() {
 
         {splatOnce}
       </Application>
+
 
       {/* UI */}
       <div className="z-9999 absolute bottom-0 w-full bg-gradient-to-b from-[transparent] to-black h-[8vh] p-8">
