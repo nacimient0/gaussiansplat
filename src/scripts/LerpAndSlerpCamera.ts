@@ -155,14 +155,13 @@ export class LerpAndSlerpCamera extends Script {
     if (t >= 1) {
       this._active = false;
       this._time = 0;
-      this.entity.setPosition(endPos);
-      if (useLookAt) this.entity.lookAt(this.lookAtX, this.lookAtY, this.lookAtZ);
       this.entity.syncHierarchy?.();
       console.log(
         `%c[LerpAndSlerpCamera] ✅ Fin du LERP ${this._forward ? "A→B" : "B→A"}`,
         "color:lime"
       );
     }
+
   }
 }
 

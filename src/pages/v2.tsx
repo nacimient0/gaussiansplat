@@ -78,29 +78,36 @@ export default function V2() {
   const cameraRef = useRef(null);
   const orbitRef = useRef(null);
 
-  // Références A / B
+  // Positions fixes
   const POS_A = [-1.35, 0.15, 1.8];
   const POS_B = [-3.5, 1.75, 0];
-
-
   const DURATION = 5.0;
 
-  const [at, setAt] = useState("A");
+  // État caméra
+  const [at, setAt] = useState("B");
   const [trigger, setTrigger] = useState(0);
   const [autoRotate, setAutoRotate] = useState(false);
 
-  // Lancer une anim
-  const toggleLerp = () => {
-    console.log(`🟢 toggleLerp déclenché (${at} → ${at === "A" ? "B" : "A"})`);
-    setAutoRotate(false);
+  // 🔄 Aller vers A
+  const goToA = () => {
+    if (at === "A") return;
+    console.log("➡️ Go vers A");
     setTrigger(Date.now());
-    setAt(at === "A" ? "B" : "A");
+    setAt("transition");
+    setTimeout(() => setAt("A"), DURATION);
   };
 
-  const toggleAutoRotate = () => setAutoRotate(p => !p);
+  // 🔙 Aller vers B
+  const goToB = () => {
+    if (at === "B") return;
+    console.log("⬅️ Go vers B");
+    setTrigger(Date.now());
+    setAt("transition");
+    setTimeout(() => setAt("B"), DURATION);
+  };
 
+  const toggleAutoRotate = () => setAutoRotate((p) => !p);
   const splatOnce = useMemo(() => <SplatScene />, []);
-
 
   return (
     <>
@@ -115,13 +122,14 @@ export default function V2() {
             distance={2.25}
             distanceMin={0.25}
             distanceMax={2.25}
-            pitchAngleMin={10}
+            pitchAngleMin={1}
             pitchAngleMax={50}
             inertiaFactor={0.15}
             enabled={!autoRotate}
             mouse={{ pan: false }}
             touch={{ pan: false }}
           />
+
           {autoRotate && (
             <Script
               script={SimpleAutoRotator}
@@ -132,13 +140,17 @@ export default function V2() {
               startFadeInTime={0}
             />
           )}
+
+          {/* 🔄 Lerp contrôlé */}
           <Script
             script={LerpAndSlerpCamera}
             pointAName="pointA"
             pointBName="pointB"
             duration={DURATION}
             trigger={trigger}
-            lookAtX={0} lookAtY={0} lookAtZ={0}
+            lookAtX={0}
+            lookAtY={0}
+            lookAtZ={0}
             fovA={62}
             fovB={62}
           />
@@ -147,13 +159,38 @@ export default function V2() {
         {splatOnce}
       </Application>
 
-
-      {/* UI */}
+      {/* 🎛️ UI dynamique */}
       <div className="z-9999 absolute bottom-0 w-full bg-gradient-to-b from-[transparent] to-black h-[8vh] p-8">
-        <div className="flex items-center justify-center h-full gap-3">
-          <button onClick={toggleLerp}>⬅️</button>
-          <button onClick={toggleAutoRotate}>{autoRotate ? "⏸️" : "▶️"}</button>
-          <button onClick={toggleLerp}>➡️</button>
+        <div className="flex items-center justify-center h-full gap-3 text-white text-3xl">
+          {/* ← visible si pas sur B */}
+          {at !== "B" && (
+            <button
+              onClick={goToB}
+              className="px-4 py-2 hover:scale-110 transition-transform"
+              disabled={at === "transition"}
+            >
+              ⬅️
+            </button>
+          )}
+
+          {/* ▶️ AutoRotate toggle */}
+          <button
+            onClick={toggleAutoRotate}
+            className="px-4 py-2 hover:scale-110 transition-transform"
+          >
+            {autoRotate ? "⏸️" : "▶️"}
+          </button>
+
+          {/* → visible si pas sur A */}
+          {at !== "A" && (
+            <button
+              onClick={goToA}
+              className="px-4 py-2 hover:scale-110 transition-transform"
+              disabled={at === "transition"}
+            >
+              ➡️
+            </button>
+          )}
         </div>
       </div>
     </>
