@@ -9,7 +9,10 @@ import { useSplat, useAsset } from "@playcanvas/react/hooks";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import LerpAndSlerpCamera from "../scripts/LerpAndSlerpCamera";
 import { SimpleAutoRotator } from "../scripts/SimpleAutoRotator";
-
+import Credits from "../components/Credits";
+import Fullscreen from "../components/Fullscreen";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 /* ------------------------------ Loader ------------------------------ */
 function Loader({ progress }) {
@@ -53,7 +56,7 @@ function Loader({ progress }) {
 /* ------------------------ Splat Scene ------------------------ */
 const SplatScene = React.memo(() => {
   const { asset, loading } = useSplat("/V2/scene-v2.sog");
-  const sky = useAsset("/V2/bg-scene.webp", "texture");
+  const sky = useAsset("/V2/bg-v2.webp", "texture");
   const progress = loading ? 0 : 1;
 
   if (!asset) return <Loader progress={progress} />;
@@ -77,6 +80,53 @@ SplatScene.displayName = "SplatScene";
 export default function V2() {
   const cameraRef = useRef(null);
   const orbitRef = useRef(null);
+  const pdfRef = useRef(null);
+
+  useEffect(() => {
+    const handleWheel = (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '=')) {
+        e.preventDefault();
+      }
+    };
+
+    const pdf = pdfRef.current;
+
+    if (pdf) {
+      pdf.addEventListener('wheel', handleWheel);
+      pdf.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      if (pdf) {
+        pdf.removeEventListener('wheel', handleWheel);
+        pdf.removeEventListener('keydown', handleKeyDown);
+      }
+    };
+  }, [pdfRef]);
+
+  const downloadPDF = () => {
+    const input = pdfRef.current;
+    html2canvas(input)
+      .then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('l', 'mm', 'a4', true);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        const imgX = (pdfWidth - imgWidth * ratio) / 2;
+        const imgY = (pdfHeight - imgHeight * ratio) / 2;
+        pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+        pdf.save(`TEST.pdf`);
+      })
+  }
 
   // Positions fixes
   const POS_A = [-1.35, 0.15, 1.8];
@@ -111,84 +161,98 @@ export default function V2() {
 
   return (
     <>
-      <Application graphicsDeviceOptions={{ antialias: false }}>
-        <Entity name="pointA" position={POS_A} />
-        <Entity name="pointB" position={POS_B} />
+      <Fullscreen />
+      <div ref={pdfRef} tabIndex={0} style={{ width: "100vw", height: "100vh", outline: "none", position: "relative", overflow: "hidden" }}>
 
-        <Entity name="camera" ref={cameraRef} position={POS_B}>
-          <Camera fov={58} />
-          <OrbitControls
-            ref={orbitRef}
-            distance={2.25}
-            distanceMin={0.25}
-            distanceMax={2.25}
-            pitchAngleMin={1}
-            pitchAngleMax={50}
-            inertiaFactor={0.15}
-            enabled={!autoRotate}
-            mouse={{ pan: false }}
-            touch={{ pan: false }}
-          />
+        <Application
+          graphicsDeviceOptions={{
+            antialias: true,
+            preserveDrawingBuffer: true,
+            preferWebGl2: true
+          }}
+        >
 
-          {autoRotate && (
-            <Script
-              script={SimpleAutoRotator}
-              speed={15}
-              pitchSpeed={0}
-              pitchAmount={0}
-              startDelay={0}
-              startFadeInTime={0}
+          <Entity name="pointA" position={POS_A} />
+          <Entity name="pointB" position={POS_B} />
+
+          <Entity name="camera" ref={cameraRef} position={POS_B}>
+            <Camera fov={62} clearColor="black" />
+            <OrbitControls
+              ref={orbitRef}
+              distance={2.25}
+              distanceMin={0.25}
+              distanceMax={2.25}
+              pitchAngleMin={7}
+              pitchAngleMax={50}
+              inertiaFactor={0.15}
+              enabled={!autoRotate}
+              mouse={{ pan: false }}
+              touch={{ pan: false }}
             />
-          )}
 
-          {/* 🔄 Lerp contrôlé */}
-          <Script
-            script={LerpAndSlerpCamera}
-            pointAName="pointA"
-            pointBName="pointB"
-            duration={DURATION}
-            trigger={trigger}
-            lookAtX={0}
-            lookAtY={0}
-            lookAtZ={0}
-            fovA={62}
-            fovB={62}
-          />
-        </Entity>
+            {autoRotate && (
+              <Script
+                script={SimpleAutoRotator}
+                speed={15}
+                pitchSpeed={0}
+                pitchAmount={0}
+                startDelay={0}
+                startFadeInTime={0}
+              />
+            )}
 
-        {splatOnce}
-      </Application>
+            <Script
+              script={LerpAndSlerpCamera}
+              pointAName="pointA"
+              pointBName="pointB"
+              duration={DURATION}
+              trigger={trigger}
+              lookAtX={0}
+              lookAtY={0}
+              lookAtZ={0}
+              fovA={62}
+              fovB={62}
+            />
+          </Entity>
 
-      {/* 🎛️ UI dynamique */}
+          {splatOnce}
+        </Application>
+      </div>
+
+      <button className="absolute top-20 left-4 z-[9999] p-3 rounded-full" onClick={downloadPDF}>
+        <svg xmlns="http://www.w3.org/2000/svg" height={30} width={30} viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" /></svg>
+      </button>
+      <div className="absolute top-4 right-4 z-9999 text-white font-bold text-sm p-2 bg-black/80 rounded-md backdrop-blur-sm shadow-md">
+        <span>IFACTORY - Z ARCHITECTURE</span>
+      </div>
+
       <div className="z-9999 absolute bottom-0 w-full bg-gradient-to-b from-[transparent] to-black h-[8vh] p-8">
+        <Credits />
         <div className="flex items-center justify-center h-full gap-3 text-white text-3xl">
-          {/* ← visible si pas sur B */}
           {at !== "B" && (
             <button
               onClick={goToB}
-              className="px-4 py-2 hover:scale-110 transition-transform"
+              className="hover:scale-110 transition-transform"
               disabled={at === "transition"}
             >
-              ⬅️
+              <svg xmlns="http://www.w3.org/2000/svg" height={40} width={40} viewBox="0 -960 960 960" fill="black"><path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z" /></svg>
             </button>
           )}
 
-          {/* ▶️ AutoRotate toggle */}
           <button
             onClick={toggleAutoRotate}
-            className="px-4 py-2 hover:scale-110 transition-transform"
+            className="hover:scale-110 transition-transform"
           >
-            {autoRotate ? "⏸️" : "▶️"}
+            {autoRotate ? <svg xmlns="http://www.w3.org/2000/svg" height={40} width={40} viewBox="0 -960 960 960" fill="black"><path d="M560-200v-560h160v560H560Zm-320 0v-560h160v560H240Z" /></svg> : <svg xmlns="http://www.w3.org/2000/svg" height={40} width={40} viewBox="0 -960 960 960" fill="black"><path d="M320-200v-560l440 280-440 280Z" /></svg>}
           </button>
 
-          {/* → visible si pas sur A */}
           {at !== "A" && (
             <button
               onClick={goToA}
-              className="px-4 py-2 hover:scale-110 transition-transform"
+              className="hover:scale-110 transition-transform"
               disabled={at === "transition"}
             >
-              ➡️
+              <svg xmlns="http://www.w3.org/2000/svg" height={40} width={40} viewBox="0 -960 960 960" fill="black"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" /></svg>
             </button>
           )}
         </div>

@@ -17,9 +17,11 @@
 }
 
 button {
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  color: black;
   cursor: pointer;
   user-select: none;
   font-size: 14px;
