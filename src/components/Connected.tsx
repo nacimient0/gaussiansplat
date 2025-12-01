@@ -14,7 +14,7 @@ export default function Connected() {
         <div className="absolute top-0 right-0 z-[9999] flex items-center gap-2 md:gap-6 bg-gray-800 text-white p-4 rounded-bl-lg text-xs md:text-lg">
             {/* Ton titre à gauche */}
             <div className="flex items-center gap-2 font-bold">
-                <span className="text-white">IFACTORY</span>
+                <span className="text-white">TEST</span>
                 <span>-</span>
                 <span>Z ARCHITECTURE</span>
             </div>

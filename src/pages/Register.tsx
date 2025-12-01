@@ -81,7 +81,7 @@ export default function Register() {
                 </div>
 
                 <img
-                    src="ifactory.svg"
+                    src="test.svg"
                     alt="Logo"
                     style={{
                         display: "flex",

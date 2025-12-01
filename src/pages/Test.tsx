@@ -30,7 +30,7 @@ function Loader({ progress }) {
     return (
         <div
             style={{
-                backgroundImage: "url('ifactory/bg-ifactory.jpg')",
+                backgroundImage: "url('test/bg-test.jpg')",
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 opacity: progress >= 1 ? 0 : 1,
@@ -67,8 +67,8 @@ function Loader({ progress }) {
 
 /* ------------------------ Splat Scene ------------------------ */
 const SplatScene = React.memo(() => {
-    const { asset, loading } = useSplat("/ifactory/scene-ifactory.sog");
-    const sky = useAsset("/ifactory/bg-ifactory.webp", "texture");
+    const { asset, loading } = useSplat("/test/scene-test.sog");
+    const sky = useAsset("/test/bg-test.webp", "texture");
     const progress = loading ? 0 : 1;
 
     if (!asset) return <Loader progress={progress} />;
@@ -115,21 +115,29 @@ const SplatScene = React.memo(() => {
 SplatScene.displayName = "SplatScene";
 
 /* ------------------------ Main ------------------------ */
-export default function Ifactory() {
+export default function Test() {
     const cameraRef = useRef(null);
+    const cameraScriptRef = useRef(null);
     const orbitRef = useRef(null);
     const pdfRef = useRef(null);
 
-    const POS_A = [-1.35, 0.15, 1.8];
-    const POS_B = [-3.5, 1.75, 0];
+    const cameraPoints = [
+        { name: "point0", position: [-3.5, 1.75, 0], fov: 62 },
+        { name: "point1", position: [-1.35, 0.15, 1.8], fov: 62 },
+        { name: "point2", position: [0.5, 1.25, -2.5], fov: 62 },
+        { name: "point3", position: [2.5, 0.5, 0.5], fov: 62 },
+        { name: "point4", position: [1.0, 2.0, -4.0], fov: 62 },
+        { name: "point5", position: [-2.0, 1.0, -1.0], fov: 62 },
+    ];
     const DURATION = 5.0;
 
-    const [at, setAt] = useState("B");
-    const [trigger, setTrigger] = useState(0);
+    const [currentPoint, setCurrentPoint] = useState(0);
+    const [isTransitioning, setIsTransitioning] = useState(false);
     const [autoRotate, setAutoRotate] = useState(false);
     const [hoveredUrl, setHoveredUrl] = useState(null);
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
+    // PDF block zoom prevention etc.
     useEffect(() => {
         const handleWheel = (e) => {
             if (e.ctrlKey || e.metaKey) {
@@ -199,36 +207,57 @@ export default function Ifactory() {
                 imgWidth * ratio,
                 imgHeight * ratio
             );
-            pdf.save(`ifactory.pdf`);
+            pdf.save(`test.pdf`);
         });
     };
 
-    const goToA = () => {
-        if (at === "A") return;
-        console.log("➡️ Go vers A");
-        setTrigger(Date.now());
-        setAt("transition");
-        setTimeout(() => setAt("A"), DURATION * 1000);
+    // Aller vers un point specifique
+    const goToPoint = (index: number) => {
+        if (cameraScriptRef.current) {
+            cameraScriptRef.current.goToPoint(index);
+            setIsTransitioning(true);
+            setTimeout(() => {
+                setCurrentPoint(index);
+                setIsTransitioning(false);
+            }, DURATION * 1000);
+        }
     };
 
-    const goToB = () => {
-        if (at === "B") return;
-        console.log("⬅️ Go vers B");
-        setTrigger(Date.now());
-        setAt("transition");
-        setTimeout(() => setAt("B"), DURATION * 1000);
+    // Aller au point suivant
+    const goNext = () => {
+        if (cameraScriptRef.current) {
+            cameraScriptRef.current.goToNext();
+            setIsTransitioning(true);
+            setTimeout(() => {
+                const nextIndex = (currentPoint + 1) % cameraPoints.length;
+                setCurrentPoint(nextIndex);
+                setIsTransitioning(false);
+            }, DURATION * 1000);
+        }
     };
 
+    // Aller au point precedent
+    const goPrevious = () => {
+        if (cameraScriptRef.current) {
+            cameraScriptRef.current.goToPrevious();
+            setIsTransitioning(true);
+            setTimeout(() => {
+                const prevIndex = (currentPoint - 1 + cameraPoints.length) % cameraPoints.length;
+                setCurrentPoint(prevIndex);
+                setIsTransitioning(false);
+            }, DURATION * 1000);
+        }
+    };
+
+    // Toggle autorotate
     const toggleAutoRotate = () => {
         setAutoRotate((prev) => {
             const next = !prev;
-            console.log(
-                `[UI] toggleAutoRotate -> ${next ? "PLAY (on)" : "STOP (off)"}`
-            );
             return next;
         });
     };
 
+    // Garde la scène splat mémoisée
     const splatOnce = useMemo(() => <SplatScene />, []);
 
     return (
@@ -249,15 +278,36 @@ export default function Ifactory() {
                 <Application
                     graphicsDeviceOptions={{
                         powerPreference: "high-performance",
-                        alpha: false,
+                        antialias: true,
+                        preserveDrawingBuffer: true,
+                        preferWebGl2: true,
                     }}
                 >
-                    <Entity name="pointA" position={POS_A} />
-                    <Entity name="pointB" position={POS_B} />
+                    {/* Creer toutes les entites de points */}
+                    {cameraPoints.map((point) => (
+                        <Entity
+                            key={point.name}
+                            name={point.name}
+                            position={point.position}
+                        />
+                    ))}
 
-                    <Entity name="camera" ref={cameraRef} position={POS_B}>
-                        <Camera fov={62} clearColor="black" />
+                    {/* camera - Position initiale au point0 */}
+                    <Entity name="camera" ref={cameraRef} position={cameraPoints[0].position}>
+                        <Camera fov={cameraPoints[0].fov} clearColor="black" />
+                        <Script
+                            ref={cameraScriptRef}
+                            script={LerpAndSlerpCamera}
+                            pointNames={cameraPoints.map(p => p.name)}
+                            duration={DURATION}
+                            lookAtX={0}
+                            lookAtY={0}
+                            lookAtZ={0}
+                            fovStart={62}
+                            fovEnd={62}
+                        />
 
+                        {/* OrbitControls toujours monte, mais desactive par le script pendant transition */}
                         <OrbitControls
                             ref={orbitRef}
                             distance={2.25}
@@ -281,18 +331,6 @@ export default function Ifactory() {
                             enabledState={autoRotate}
                         />
 
-                        <Script
-                            script={LerpAndSlerpCamera}
-                            pointAName="pointA"
-                            pointBName="pointB"
-                            duration={5.0}
-                            trigger={trigger}
-                            lookAtX={0}
-                            lookAtY={0}
-                            lookAtZ={0}
-                            fovA={62}
-                            fovB={62}
-                        />
                     </Entity>
 
                     {splatOnce}
@@ -319,9 +357,9 @@ export default function Ifactory() {
                     </div>
                 )}
             </div>
-
+            {/* Bouton PDF */}
             <button
-                className="absolute top-18 left-4 z-[1000] p-3 rounded-full md:top-20"
+                className="button-controls absolute top-18 left-4 z-[1000] p-3 rounded-full md:top-20"
                 onClick={downloadPDF}
             >
                 <svg
@@ -336,67 +374,86 @@ export default function Ifactory() {
 
             <div className="fixed bottom-0 left-0 w-full bg-gradient-to-b from-transparent to-black h-[10vh] p-8 z-[1000]">
                 <Credits />
-                <div className="flex items-center justify-center h-full gap-3 text-white text-3xl">
-                    {at !== "B" && (
-                        <button
-                            onClick={goToB}
-                            className="hover:scale-110 transition-transform"
-                            disabled={at === "transition"}
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                height={40}
-                                width={40}
-                                viewBox="0 -960 960 960"
+                <div className="flex items-center justify-center flex-col h-full gap-2 text-white text-3xl">
+                    <div className="flex gap-2">
+                        {/* Bouton Precedent */}
+                        {currentPoint > 0 && (
+                            <button
+                                onClick={goPrevious}
+                                className="button-controls hover:scale-110 transition-transform"
+                                disabled={isTransitioning}
                             >
-                                <path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z" />
-                            </svg>
-                        </button>
-                    )}
-
-                    <button
-                        onClick={toggleAutoRotate}
-                        className="hover:scale-110 transition-transform"
-                    >
-                        {autoRotate ? (
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                height={40}
-                                width={40}
-                                viewBox="0 -960 960 960"
-                            >
-                                <path d="M560-200v-560h160v560H560Zm-320 0v-560h160v560H240Z" />
-                            </svg>
-                        ) : (
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                height={40}
-                                width={40}
-                                viewBox="0 -960 960 960"
-                            >
-                                <path d="M320-200v-560l440 280-440 280Z" />
-                            </svg>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    height={40}
+                                    width={40}
+                                    viewBox="0 -960 960 960"
+                                >
+                                    <path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z" />
+                                </svg>
+                            </button>
                         )}
-                    </button>
 
-                    {at !== "A" && (
+                        {/* bouton play/pause autorotate */}
                         <button
-                            onClick={goToA}
-                            className="hover:scale-110 transition-transform"
-                            disabled={at === "transition"}
+                            onClick={toggleAutoRotate}
+                            className="button-controls hover:scale-110 transition-transform"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                height={40}
-                                width={40}
-                                viewBox="0 -960 960 960"
-                            >
-                                <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" />
-                            </svg>
+                            {autoRotate ? (
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    height={40}
+                                    width={40}
+                                    viewBox="0 -960 960 960"
+                                >
+                                    <path d="M560-200v-560h160v560H560Zm-320 0v-560h160v560H240Z" />
+                                </svg>
+                            ) : (
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    height={40}
+                                    width={40}
+                                    viewBox="0 -960 960 960"
+                                >
+                                    <path d="M320-200v-560l440 280-440 280Z" />
+                                </svg>
+                            )}
                         </button>
-                    )}
+
+                        {/* Bouton Suivant */}
+                        {currentPoint < cameraPoints.length - 1 && (
+                            <button
+                                onClick={goNext}
+                                className="button-controls hover:scale-110 transition-transform"
+                                disabled={isTransitioning}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    height={40}
+                                    width={40}
+                                    viewBox="0 -960 960 960"
+                                >
+                                    <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                    {/* Indicateur de points (optionnel) */}
+                    <div className="flex gap-2">
+                        {cameraPoints.map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => goToPoint(index)}
+                                disabled={isTransitioning || currentPoint === index}
+                                className={`w-3 h-3 rounded-full transition-all  ${currentPoint === index
+                                    ? "bg-red-500 scale-125"
+                                    : "bg-gray-500 hover:bg-gray-300 border-1 border-white cursor-pointer"
+                                    }`}
+                            />
+                        ))}
+                    </div>
                 </div>
-            </div>
+            </div >
         </>
     );
 }
