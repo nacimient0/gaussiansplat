@@ -28,7 +28,10 @@ export default function Register() {
         }
 
         try {
-            const res = await api.post("/register", form);
+            await api.get("/sanctum/csrf-cookie");
+
+            const res = await api.post("/api/register", form);
+
             setToken(res.data.token, res.data.user.id, res.data.user.name);
             navigate("/"); // redirige après inscription
         } catch (err: any) {
@@ -45,6 +48,7 @@ export default function Register() {
                 backgroundImage: "url('log-bg.jpg')",
                 backgroundSize: "cover",
                 backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -141,20 +145,7 @@ export default function Register() {
                     )}
 
                     <div style={{ display: "flex", justifyContent: "center" }}>
-                        <button
-                            style={{
-                                display: "flex",
-                                cursor: "pointer",
-                                backgroundColor: "#F59A00",
-                                padding: "10px 20px",
-                                borderRadius: "4px",
-                                textShadow: "0 0 5px black",
-                                fontWeight: "bold",
-                            }}
-                            type="submit"
-                        >
-                            S'inscrire
-                        </button>
+                        <button style={{ display: "flex", cursor: "pointer", backgroundColor: "#F59A00", padding: "10px 20px", borderRadius: "4px", textShadow: "0 0 5px black" }} type="submit">S'inscrire</button>
                     </div>
                 </form>
 

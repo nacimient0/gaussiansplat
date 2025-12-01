@@ -16,18 +16,29 @@ export default function Login() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+
         try {
-            const res = await api.post("/login", form);
+            // Étape 1 : obtenir le cookie CSRF
+            await api.get("/sanctum/csrf-cookie");
+
+            // Étape 2 : login
+            const res = await api.post("/api/login", form);
+
             setToken(res.data.token, res.data.user.id, res.data.user.name);
-            navigate("/v1"); // redirige vers la page v1 après connexion
+            navigate("/secured");
         } catch (err: any) {
             setError(err.response?.data?.message || "Erreur inconnue");
             console.error("Erreur API :", err.response?.data || err.message);
         }
     };
 
+
     return (
-        <div style={{ width: "100%", height: "100vh", backgroundImage: "url('log-bg.jpg')", backgroundSize: "cover", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{
+            width: "100%", height: "100vh", backgroundImage: "url('log-bg.jpg')", backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat", display: "flex", alignItems: "center", justifyContent: "center"
+        }}>
             <div style={{
                 display: "flex",
                 padding: "30px",
@@ -66,6 +77,19 @@ export default function Login() {
                         <button style={{ display: "flex", cursor: "pointer", backgroundColor: "#F59A00", padding: "10px 20px", borderRadius: "4px", textShadow: "0 0 5px black" }} type="submit">Se connecter</button>
                     </div>
                 </form>
+                <p style={{ fontSize: "14px", textAlign: "center" }}>
+                    Pas encore de compte ?{" "}
+                    <a
+                        href="/register"
+                        style={{
+                            color: "#F59A00",
+                            textDecoration: "underline",
+                            fontWeight: "bold",
+                        }}
+                    >
+                        S'inscrire
+                    </a>
+                </p>
             </div>
         </div >
     );

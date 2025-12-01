@@ -1,168 +1,162 @@
-import { Script, Entity, Vec3, Quat } from "playcanvas";
+import { Script, Entity, Vec3 } from "playcanvas";
 
-/**
- * LerpAndSlerpCamera : interpolation fluide entre deux points (A ↔ B)
- * - Lerp position
- * - Slerp rotation (ou lookAt vers un point)
- * - Lerp du FOV
- * - Synchronisation continue avec OrbitControls pendant l’anim
- */
 export class LerpAndSlerpCamera extends Script {
-  static scriptName = "LerpAndSlerpCamera";
+    static scriptName = "LerpAndSlerpCamera";
 
-  // Props reçues depuis React
-  pointAName = "pointA";
-  pointBName = "pointB";
-  duration = 1.0;
-  trigger = 0;
-  lookAtX = NaN;
-  lookAtY = NaN;
-  lookAtZ = NaN;
-  fovA = NaN;
-  fovB = NaN;
-  fovMid = NaN;
+    pointNames: string[] = [];
+    duration = 2.0;
+    lookAtX = 0;
+    lookAtY = 0;
+    lookAtZ = 0;
+    fovStart = 62;
+    fovEnd = 62;
 
-  // internes
-  private _a: Entity | null = null;
-  private _b: Entity | null = null;
-  private _time = 0;
-  private _active = false;
-  private _forward = true;
-  private _lastTrigger = 0;
-  private _orbit: any = null;
+    private _points: Entity[] = [];
+    private _currentIndex = 0;
+    private _targetIndex = 0;
+    private _time = 0;
+    private _active = false;
+    private _orbit: unknown = null;
+    private _startPos = new Vec3();
+    private _endPos = new Vec3();
+    initialize() {
+        console.log("[LerpAndSlerpCamera] Initialize avec", this.pointNames.length, "points");
 
-  initialize() {
-    console.log("%c[LerpAndSlerpCamera] ✅ initialize()", "color:cyan");
-    this._grabPoints();
-    this._lastTrigger = this.trigger ?? 0;
+        setTimeout(() => {
+            this._grabPoints();
 
-    // Essaie de trouver OrbitControls
-    // @ts-expect-error
-    this._orbit = this.entity.script?.orbitCamera ?? this.entity.script?.orbitControls ?? null;
-    if (this._orbit) console.log("[LerpAndSlerpCamera] OrbitControls trouvé ✅");
-    else console.warn("[LerpAndSlerpCamera] ⚠️ OrbitControls non trouvé pour l’instant.");
+            if (this._points.length > 0) {
+                console.log("[LerpAndSlerpCamera] Position initiale:", this._points[0].getPosition());
+                this.entity.setPosition(this._points[0].getPosition());
+                this.entity.lookAt(this.lookAtX, this.lookAtY, this.lookAtZ);
+            } else {
+                console.error("[LerpAndSlerpCamera] AUCUN POINT TROUVE!");
+            }
 
-    // Log les changements d’attributs (debug)
-    this.on("attr", (name, value) => {
-      if (name === "trigger") {
-        console.log("[LerpAndSlerpCamera] trigger modifié depuis React →", value);
-      }
-    });
-  }
+            const script = this.entity.script as unknown as Record<string, unknown>;
+            this._orbit = script?.orbitCamera ?? script?.orbitControls ?? null;
+            console.log("[LerpAndSlerpCamera] OrbitControls:", this._orbit ? "trouve" : "non trouve");
+        }, 100);
+    }
+    private _grabPoints() {
+        const root = this.app?.root;
+        if (!root) return;
 
-  private _grabPoints() {
-    const root = this.app?.root;
-    if (!root) return;
-    this._a = root.findByName(this.pointAName) as Entity;
-    this._b = root.findByName(this.pointBName) as Entity;
-    if (this._a && this._b) console.log("[LerpAndSlerpCamera] Points A/B trouvés ✅");
-  }
+        this._points = this.pointNames
+            .map(name => {
+                const point = root.findByName(name) as Entity;
+                if (!point) console.warn("[LerpAndSlerpCamera] Point non trouve:", name);
+                return point;
+            })
+            .filter(p => p !== null);
 
-  private _ease(t: number) {
-    return t * t * (3 - 2 * t); // smoothstep
-  }
-
-  private _hasFov(v: number) {
-    return Number.isFinite(v);
-  }
-
-  update(dt: number) {
-    if (!this._a || !this._b) this._grabPoints();
-    if (!this._a || !this._b) return;
-
-    // Détection du trigger
-    if ((this.trigger ?? 0) !== this._lastTrigger) {
-      console.log(
-        `[LerpAndSlerpCamera] ▶️ Nouveau trigger détecté (${this._lastTrigger} → ${this.trigger})`
-      );
-      this._lastTrigger = this.trigger ?? 0;
-      this._time = 0;
-      this._active = true;
-      this._forward = !this._forward;
-      console.log(
-        `[LerpAndSlerpCamera] 🚀 Démarrage du lerp ${this._forward ? "A→B" : "B→A"} (durée ${this.duration}s)`
-      );
+        console.log("[LerpAndSlerpCamera]", this._points.length, "/", this.pointNames.length, "points trouves");
     }
 
-    if (!this._active) return;
+    private _ease(t: number) {
+        return t * t * (3 - 2 * t);
+    } goToPoint(index: number) {
+        if (this._points.length === 0) {
+            console.error("[LerpAndSlerpCamera] Impossible: aucun point!");
+            return;
+        }
 
-    const dur = Math.max(0.0001, this.duration);
-    this._time += dt;
-    const t = Math.min(1, this._time / dur);
-    const k = this._ease(t);
+        if (index < 0 || index >= this._points.length) {
+            console.warn("[LerpAndSlerpCamera] Index invalide:", index);
+            return;
+        }
 
-    // --- Position ---
-    const startPos = this._forward ? this._a.getPosition() : this._b.getPosition();
-    const endPos = this._forward ? this._b.getPosition() : this._a.getPosition();
-    const curPos = new Vec3().lerp(startPos, endPos, k);
-    this.entity.setPosition(curPos);
+        if (index === this._currentIndex) {
+            console.log("[LerpAndSlerpCamera] Deja au point", index);
+            return;
+        }
 
-    // --- Rotation ---
-    const useLookAt =
-      Number.isFinite(this.lookAtX) &&
-      Number.isFinite(this.lookAtY) &&
-      Number.isFinite(this.lookAtZ);
+        console.log("[LerpAndSlerpCamera] Transition", this._currentIndex, "->", index);
 
-    if (useLookAt) {
-      this.entity.lookAt(this.lookAtX, this.lookAtY, this.lookAtZ);
-    } else {
-      const startRot = this._forward ? this._a.getRotation() : this._b.getRotation();
-      const endRot = this._forward ? this._b.getRotation() : this._a.getRotation();
-      const q = new Quat().slerp(startRot, endRot, k);
-      this.entity.setRotation(q);
+        // ✅ NE PLUS désactiver OrbitControls (ancien code fonctionnait sans)
+        // On laisse OrbitControls actif et on le synchronise en continu
+
+        this._startPos.copy(this.entity.getPosition());
+        this._endPos.copy(this._points[index].getPosition());
+
+        console.log("[LerpAndSlerpCamera] Start:", this._startPos);
+        console.log("[LerpAndSlerpCamera] End:", this._endPos);
+
+        this._targetIndex = index;
+        this._time = 0;
+        this._active = true;
     }
 
-    // --- FOV ---
-    const cam = (this.entity as any).camera as { fov: number } | undefined;
-    if (cam && this._hasFov(this.fovA) && this._hasFov(this.fovB)) {
-      const startF = this._forward ? this.fovA : this.fovB;
-      const endF = this._forward ? this.fovB : this.fovA;
-      cam.fov = startF + (endF - startF) * k;
+    goToNext() {
+        this.goToPoint((this._currentIndex + 1) % this._points.length);
     }
 
-    // --- Synchronisation live OrbitControls ---
-    if (this._orbit) {
-      const pivot = new Vec3(
-        Number.isFinite(this.lookAtX) ? this.lookAtX : 0,
-        Number.isFinite(this.lookAtY) ? this.lookAtY : 0,
-        Number.isFinite(this.lookAtZ) ? this.lookAtZ : 0
-      );
-      const RAD2DEG = 180 / Math.PI;
-      const dir = new Vec3().sub2(pivot, curPos);
-      const distance = dir.length();
-      if (distance > 1e-6) {
-        dir.normalize();
-        const yaw = Math.atan2(-dir.x, -dir.z) * RAD2DEG;
-        const pitch = Math.asin(dir.y) * RAD2DEG;
-
-        this._orbit.yaw = yaw;
-        this._orbit.pitch = pitch;
-        if ("distance" in this._orbit) this._orbit.distance = distance;
-        if ("pivotPoint" in this._orbit) this._orbit.pivotPoint = pivot;
-
-        if (typeof this._orbit.update === "function") this._orbit.update(0);
-      }
+    goToPrevious() {
+        this.goToPoint((this._currentIndex - 1 + this._points.length) % this._points.length);
     }
 
-    if (this.app?.frame % 30 === 0) {
-      console.log(
-        `[LerpAndSlerpCamera] Frame ${this.app.frame} t=${t.toFixed(2)} pos=(${curPos
-          .x.toFixed(2)},${curPos.y.toFixed(2)},${curPos.z.toFixed(2)})`
-      );
+    getCurrentIndex(): number {
+        return this._currentIndex;
     }
 
-    // --- Fin du lerp ---
-    if (t >= 1) {
-      this._active = false;
-      this._time = 0;
-      this.entity.syncHierarchy?.();
-      console.log(
-        `%c[LerpAndSlerpCamera] ✅ Fin du LERP ${this._forward ? "A→B" : "B→A"}`,
-        "color:lime"
-      );
+    getTotalPoints(): number {
+        return this._points.length;
     }
 
-  }
+    isTransitioning(): boolean {
+        return this._active;
+    }
+    update(dt: number) {
+        if (this._points.length === 0) this._grabPoints();
+        if (this._points.length === 0) return;
+        if (!this._active) return;
+
+        this._time += dt;
+        const t = Math.min(1, this._time / Math.max(0.001, this.duration));
+        const k = this._ease(t);
+
+        // Log progression
+        if (Math.floor(this._time * 2) !== Math.floor((this._time - dt) * 2)) {
+            console.log(`[LerpAndSlerpCamera] ${(t * 100).toFixed(0)}%`);
+        } const curPos = new Vec3().lerp(this._startPos, this._endPos, k);
+        this.entity.setPosition(curPos);
+        this.entity.lookAt(this.lookAtX, this.lookAtY, this.lookAtZ);
+
+        const cam = this.entity.camera;
+        if (cam) {
+            cam.fov = this.fovStart + (this.fovEnd - this.fovStart) * k;
+        }    // ✅ SYNCHRONISER OrbitControls EN CONTINU pendant l'animation
+        if (this._orbit && typeof this._orbit === 'object') {
+            const orbit = this._orbit as Record<string, unknown>;
+            const pivot = new Vec3(this.lookAtX, this.lookAtY, this.lookAtZ);
+            const dir = new Vec3().sub2(pivot, curPos);
+            const distance = dir.length();
+
+            if (distance > 1e-6) {
+                dir.normalize();
+                const RAD2DEG = 180 / Math.PI;
+                const yaw = Math.atan2(-dir.x, -dir.z) * RAD2DEG;
+                const pitch = Math.asin(dir.y) * RAD2DEG;
+
+                // Synchroniser les paramètres à chaque frame
+                orbit.yaw = yaw;
+                orbit.pitch = pitch;
+                if ("distance" in orbit) orbit.distance = distance;
+                if ("pivotPoint" in orbit) orbit.pivotPoint = pivot;
+
+                if (typeof orbit.update === 'function') {
+                    orbit.update(0);
+                }
+            }
+        } if (t >= 1) {
+            this._active = false;
+            this._time = 0;
+            this._currentIndex = this._targetIndex;
+
+            // ✅ PLUS de réactivation : OrbitControls était resté actif tout du long
+            console.log("[LerpAndSlerpCamera] Arrive au point", this._currentIndex);
+        }
+    }
 }
 
 export default LerpAndSlerpCamera;

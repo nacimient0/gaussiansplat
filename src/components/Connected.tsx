@@ -11,25 +11,38 @@ export default function Connected() {
     };
 
     return (
-        <header className="absolute right-0 bg-gray-800 text-white p-4 flex justify-between items-center">
-            <nav>
-                {token ? (
-                    <div className="flex items-center gap-4">
-                        <span>Connecté en tant que <b>{userName}</b></span>
-                        <button
-                            onClick={handleLogout}
-                            className="cursor-pointer px-3 py-1 bg-red-500 rounded hover:bg-red-600"
-                        >
-                            Déconnexion
-                        </button>
-                    </div>
-                ) : (
-                    <div className="flex gap-4">
-                        <Link to="/login">Login</Link>
-                        <Link to="/register">Register</Link>
-                    </div>
-                )}
-            </nav>
-        </header>
+        <div className="absolute top-0 right-0 z-[9999] flex items-center gap-2 md:gap-6 bg-gray-800 text-white p-4 rounded-bl-lg text-xs md:text-lg">
+            {/* Ton titre à gauche */}
+            <div className="flex items-center gap-2 font-bold">
+                <span className="text-white">IFACTORY</span>
+                <span>-</span>
+                <span>Z ARCHITECTURE</span>
+            </div>
+            <div className="flex-1">/</div>
+
+            {/* Ton bloc login / connecté */}
+            {token ? (
+                <div className="flex items-center gap-4">
+                    <span>
+                        Connecté en tant que <b>{userName}</b>
+                    </span>
+                    <button
+                        onClick={handleLogout}
+                        className="btn-disconnect"
+                    >
+                        Déconnexion
+                    </button>
+                </div>
+            ) : (
+                <div className="flex gap-4">
+                    <Link to="/login" className="font-bold hover:text-blue-500 transition">
+                        LOGIN
+                    </Link>
+                    <Link to="/register" className="font-bold hover:text-blue-500 transition">
+                        REGISTER
+                    </Link>
+                </div>
+            )}
+        </div>
     );
 }
