@@ -4,7 +4,7 @@ import Login from "./pages/Login";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Connected from "./components/Connected";
-import Homair from "./pages/Homair";
+import Pantin from "./pages/Pantin";
 
 function App() {
   return (
@@ -15,14 +15,14 @@ function App() {
           <Route
             path="/"
             element={
-              <Homair />
+              <Pantin />
             }
           />
           <Route
             path="/secured"
             element={
               <ProtectedRoute>
-                <Homair />
+                <Pantin />
               </ProtectedRoute>
             }
           />
