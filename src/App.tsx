@@ -4,7 +4,7 @@ import Login from "./pages/Login";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Connected from "./components/Connected";
-import Clignancourt from "./pages/Clignancourt";
+import Homair from "./pages/Homair";
 
 function App() {
   return (
@@ -15,14 +15,14 @@ function App() {
           <Route
             path="/"
             element={
-              <Clignancourt />
+              <Homair />
             }
           />
           <Route
             path="/secured"
             element={
               <ProtectedRoute>
-                <Clignancourt />
+                <Homair />
               </ProtectedRoute>
             }
           />
