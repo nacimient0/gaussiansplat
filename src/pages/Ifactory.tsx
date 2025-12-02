@@ -230,13 +230,15 @@ export default function Ifactory() {
           position: "relative",
           overflow: "hidden",
         }}
-      >        <Application
-        graphicsDeviceOptions={{
-          antialias: true,
-          preserveDrawingBuffer: true,
-          preferWebGl2: true,
-        }}
       >
+        <Application
+          graphicsDeviceOptions={{
+            powerPreference: "high-performance",
+            antialias: true,
+            preserveDrawingBuffer: true,
+            preferWebGl2: true,
+          }}
+        >
           {/* Creer toutes les entites de points */}
           {cameraPoints.map((point) => (
             <Entity
@@ -287,7 +289,8 @@ export default function Ifactory() {
 
           {splatOnce}
         </Application>
-      </div>      {/* Bouton PDF */}
+      </div>
+      {/* Bouton PDF */}
       <button
         className="button-controls absolute top-18 left-4 z-[1000] p-3 rounded-full md:top-20"
         onClick={downloadPDF}

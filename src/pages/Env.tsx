@@ -130,7 +130,14 @@ function Scene() {
 
 function Env() {
   return (
-    <Application>
+    <Application
+      graphicsDeviceOptions={{
+        powerPreference: "high-performance",
+        antialias: true,
+        preserveDrawingBuffer: true,
+        preferWebGl2: true,
+      }}
+    >
       <Scene />
     </Application>
   );
