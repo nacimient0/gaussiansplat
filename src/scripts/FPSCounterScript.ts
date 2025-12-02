@@ -41,7 +41,7 @@ export class FPSCounterScript extends Script {
                     graph: true,
                     theme: 'dark',
                     position: 'absolute',
-                    top: '10px',
+                    top: '80px',
                     right: '10px',
                     left: 'auto',
                     zIndex: 10000
