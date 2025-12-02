@@ -24,9 +24,9 @@ const SplatScene = React.memo(() => {
             </Entity>
 
             {/* 🎯 FPS Counter */}
-            <Entity name="fps-counter">
+            {/* <Entity name="fps-counter">
                 <Script script={FPSCounterScript} />
-            </Entity>
+            </Entity> */}
         </>
     );
 });
