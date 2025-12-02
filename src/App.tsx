@@ -11,7 +11,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        {/* <Connected /> */}
+        <Connected />
         <Routes>
           <Route
             path="/"

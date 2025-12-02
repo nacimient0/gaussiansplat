@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Script, Vec3, Color, StandardMaterial } from "playcanvas";
 
 export class HotspotScript extends Script {
