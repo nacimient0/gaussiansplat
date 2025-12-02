@@ -54,7 +54,7 @@ export default function Login() {
                 justifyContent: "space-around"
             }}>
                 <div style={{ fontSize: "22px", fontWeight: "bold", textDecoration: "underline" }}>Connexion</div>
-                <img src="ifactory.svg" alt="Logo" style={{ display: "flex", backgroundColor: "white", height: '100px' }} />
+                {/* <img src="ifactory.svg" alt="Logo" style={{ display: "flex", backgroundColor: "white", height: '100px' }} /> */}
                 <form style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }} onSubmit={handleSubmit}>
                     <input className="input-login"
                         type="email"

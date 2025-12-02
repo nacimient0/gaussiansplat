@@ -80,7 +80,7 @@ export default function Register() {
                     Inscription
                 </div>
 
-                <img
+                {/* <img
                     src="ifactory.svg"
                     alt="Logo"
                     style={{
@@ -90,7 +90,7 @@ export default function Register() {
                         borderRadius: "5px",
                         padding: "10px",
                     }}
-                />
+                /> */}
 
                 <form
                     onSubmit={handleSubmit}
