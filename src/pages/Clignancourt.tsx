@@ -14,7 +14,7 @@ import SimpleAutoRotator from "../scripts/SimpleAutoRotator";
 /* ------------------------ Splat Scene ------------------------ */
 const SplatScene = React.memo(() => {
     const { asset, loading } = useSplat("/clignancourt/clignancourt.sog");
-    
+
     if (!asset) return null;
 
     return (
@@ -36,7 +36,7 @@ SplatScene.displayName = "SplatScene";
 export default function Clignancourt() {
     const orbitRef = useRef(null);
     const [autoRotate, setAutoRotate] = useState(false);
-    
+
     const splatOnce = useMemo(() => <SplatScene />, []);
 
     const toggleAutoRotate = () => {
@@ -63,7 +63,9 @@ export default function Clignancourt() {
                 <Application
                     graphicsDeviceOptions={{
                         powerPreference: "high-performance",
-                        alpha: false,
+                        antialias: true,
+                        preserveDrawingBuffer: true,
+                        preferWebGl2: true,
                     }}
                 >
                     {/* 📷 Camera avec OrbitControls et AutoRotator */}
