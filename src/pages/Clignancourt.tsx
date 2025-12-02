@@ -152,15 +152,15 @@ export default function Clignancourt() {
                     }}
                 >
                     {/* 📷 Camera avec OrbitControls et AutoRotator */}
-                    <Entity name="camera" position={[10, 150, 10]}>
+                    <Entity name="camera" position={[0.75, 1, -1.25]}>
                         <Camera fov={62} clearColor="black" />
 
                         <OrbitControls
                             ref={orbitRef}
-                            distance={8}
+                            distance={4}
                             distanceMin={0.25}
-                            distanceMax={15}
-                            pitchAngleMin={7}
+                            distanceMax={8}
+                            pitchAngleMin={9}
                             pitchAngleMax={50}
                             inertiaFactor={0.15}
                             enabled={!autoRotate}
