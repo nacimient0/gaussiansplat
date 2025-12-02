@@ -98,13 +98,14 @@ export default function Ifactory() {
   const cameraPoints = [
     { name: "point0", position: [-3.5, 1.75, 0], fov: 62 },
     { name: "point1", position: [-1.35, 0.15, 1.8], fov: 62 },
-    { name: "point2", position: [0.5, 1.25, -2.5], fov: 62 },
-    { name: "point3", position: [2.5, 0.5, 0.5], fov: 62 },
-    { name: "point4", position: [1.0, 2.0, -4.0], fov: 62 },
-    { name: "point5", position: [-2.0, 1.0, -1.0], fov: 62 },
+    { name: "point2", position: [0.25, 0.75, 2], fov: 62 },
+    { name: "point3", position: [2, 1, 2], fov: 62 },
+    { name: "point4", position: [3.5, 1.75, 0], fov: 62 },
+    { name: "point5", position: [2, 1.25, -2], fov: 62 },
+    { name: "point6", position: [0.25, 0.75, -2], fov: 62 },
   ];
 
-  const DURATION = 5.0;
+  const DURATION = 2.0;
 
   // État caméra logique UI
   const [currentPoint, setCurrentPoint] = useState(0);
@@ -178,10 +179,10 @@ export default function Ifactory() {
       }, DURATION * 1000);
     }
   };
-
-  // Aller au point suivant
+  // Aller au point suivant (navigation circulaire)
   const goNext = () => {
-    if (cameraScriptRef.current) {
+    if (cameraScriptRef.current && !isTransitioning) {
+      console.log("[UI] Go to next point");
       cameraScriptRef.current.goToNext();
       setIsTransitioning(true);
       setTimeout(() => {
@@ -192,9 +193,10 @@ export default function Ifactory() {
     }
   };
 
-  // Aller au point precedent
+  // Aller au point precedent (navigation circulaire)
   const goPrevious = () => {
-    if (cameraScriptRef.current) {
+    if (cameraScriptRef.current && !isTransitioning) {
+      console.log("[UI] Go to previous point");
       cameraScriptRef.current.goToPrevious();
       setIsTransitioning(true);
       setTimeout(() => {
@@ -307,31 +309,27 @@ export default function Ifactory() {
 
       {/* HUD bas */}
       <div className="fixed bottom-0 left-0 w-full bg-gradient-to-b from-transparent to-black h-[10vh] p-8 z-[1000]">
-        <Credits />
-        <div className="flex items-center justify-center flex-col h-full gap-2 text-white text-3xl">
-          <div className="flex gap-2">
-            {/* Bouton Precedent */}
-            {currentPoint > 0 && (
-              <button
-                onClick={goPrevious}
-                className="button-controls hover:scale-110 transition-transform"
-                disabled={isTransitioning}
+        <Credits />        <div className="flex items-center justify-center flex-col h-full gap-2 text-white text-3xl">
+          <div className="flex gap-2">            {/* Bouton Precedent - TOUJOURS visible (navigation circulaire) */}
+            <button
+              onClick={goPrevious}
+              className="button-controls hover:scale-110 transition-transform disabled:opacity-50"
+              disabled={isTransitioning}
+              title={`Aller au point ${(currentPoint - 1 + cameraPoints.length) % cameraPoints.length}`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                height={40}
+                width={40}
+                viewBox="0 -960 960 960"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  height={40}
-                  width={40}
-                  viewBox="0 -960 960 960"
-                >
-                  <path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z" />
-                </svg>
-              </button>
-            )}
-
-            {/* bouton play/pause autorotate */}
+                <path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z" />
+              </svg>
+            </button>            {/* bouton play/pause autorotate */}
             <button
               onClick={toggleAutoRotate}
               className="button-controls hover:scale-110 transition-transform"
+              title={autoRotate ? "Arrêter la rotation" : "Démarrer la rotation"}
             >
               {autoRotate ? (
                 <svg
@@ -352,25 +350,22 @@ export default function Ifactory() {
                   <path d="M320-200v-560l440 280-440 280Z" />
                 </svg>
               )}
-            </button>
-
-            {/* Bouton Suivant */}
-            {currentPoint < cameraPoints.length - 1 && (
-              <button
-                onClick={goNext}
-                className="button-controls hover:scale-110 transition-transform"
-                disabled={isTransitioning}
+            </button>            {/* Bouton Suivant - TOUJOURS visible (navigation circulaire) */}
+            <button
+              onClick={goNext}
+              className="button-controls hover:scale-110 transition-transform disabled:opacity-50"
+              disabled={isTransitioning}
+              title={`Aller au point ${(currentPoint + 1) % cameraPoints.length}`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                height={40}
+                width={40}
+                viewBox="0 -960 960 960"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  height={40}
-                  width={40}
-                  viewBox="0 -960 960 960"
-                >
-                  <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" />
-                </svg>
-              </button>
-            )}
+                <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" />
+              </svg>
+            </button>
           </div>
 
           {/* Indicateur de points (optionnel) */}
