@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Script } from "playcanvas";
 
 declare global {
