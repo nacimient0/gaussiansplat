@@ -22,7 +22,9 @@ function App() {
           />
           <Route
             path="/test"
-            element={<Test />}
+            element={
+              <Test
+              />}
           />
           <Route
             path="/secured"

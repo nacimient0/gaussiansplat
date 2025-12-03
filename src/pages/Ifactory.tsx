@@ -144,6 +144,7 @@ export default function Ifactory() {
       }
     };
   }, [pdfRef]);
+
   // PDF capture
   const downloadPDF = () => {
     const input = pdfRef.current;
@@ -292,6 +293,7 @@ export default function Ifactory() {
           {splatOnce}
         </Application>
       </div>
+
       {/* Bouton PDF */}
       <button
         className="button-controls absolute top-18 left-4 z-[1000] p-3 rounded-full md:top-20"
@@ -309,8 +311,11 @@ export default function Ifactory() {
 
       {/* HUD bas */}
       <div className="fixed bottom-0 left-0 w-full bg-gradient-to-b from-transparent to-black h-[10vh] p-8 z-[1000]">
-        <Credits />        <div className="flex items-center justify-center flex-col h-full gap-2 text-white text-3xl">
-          <div className="flex gap-2">            {/* Bouton Precedent - TOUJOURS visible (navigation circulaire) */}
+        <Credits />
+        <div className="flex items-center justify-center flex-col h-full gap-2 text-white text-3xl">
+          <div className="flex gap-2">
+
+            {/* Bouton Precedent - TOUJOURS visible (navigation circulaire) */}
             <button
               onClick={goPrevious}
               className="button-controls hover:scale-110 transition-transform disabled:opacity-50"
@@ -325,7 +330,9 @@ export default function Ifactory() {
               >
                 <path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z" />
               </svg>
-            </button>            {/* bouton play/pause autorotate */}
+            </button>
+
+            {/* bouton play/pause autorotate */}
             <button
               onClick={toggleAutoRotate}
               className="button-controls hover:scale-110 transition-transform"
@@ -350,7 +357,9 @@ export default function Ifactory() {
                   <path d="M320-200v-560l440 280-440 280Z" />
                 </svg>
               )}
-            </button>            {/* Bouton Suivant - TOUJOURS visible (navigation circulaire) */}
+            </button>
+
+            {/* Bouton Suivant - TOUJOURS visible (navigation circulaire) */}
             <button
               onClick={goNext}
               className="button-controls hover:scale-110 transition-transform disabled:opacity-50"
@@ -383,10 +392,7 @@ export default function Ifactory() {
             ))}
           </div>
         </div>
-
-
-      </div >
-
+      </div>
     </>
   );
 }

@@ -30,7 +30,7 @@ function Loader({ progress }) {
     return (
         <div
             style={{
-                backgroundImage: "url('test/bg-test.jpg')",
+                backgroundImage: "url('/vrac/bg-test.jpg')",
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 opacity: progress >= 1 ? 0 : 1,
@@ -67,8 +67,8 @@ function Loader({ progress }) {
 
 /* ------------------------ Splat Scene ------------------------ */
 const SplatScene = React.memo(() => {
-    const { asset, loading } = useSplat("/test/scene-test.sog");
-    const sky = useAsset("/test/bg-test.webp", "texture");
+    const { asset, loading } = useSplat("/vrac/scene-test.sog");
+    const sky = useAsset("/vrac/bg-test.webp", "texture");
     const progress = loading ? 0 : 1;
 
     if (!asset) return <Loader progress={progress} />;
