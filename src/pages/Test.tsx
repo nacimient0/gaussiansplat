@@ -68,7 +68,7 @@ function Loader({ progress }) {
 /* ------------------------ Splat Scene ------------------------ */
 const SplatScene = React.memo(() => {
     const { asset, loading } = useSplat("/test/scene-test.sog");
-    const sky = useAsset("/test/bg-test.webp", "texture");
+    const sky = useAsset("/test/test-bg.jpg", "texture");
     const progress = loading ? 0 : 1;
 
     if (!asset) return <Loader progress={progress} />;
@@ -311,7 +311,7 @@ export default function Test() {
                         <OrbitControls
                             ref={orbitRef}
                             distance={2.25}
-                            distanceMin={0.25}
+                            distanceMin={2}
                             distanceMax={2.25}
                             pitchAngleMin={7}
                             pitchAngleMax={50}
