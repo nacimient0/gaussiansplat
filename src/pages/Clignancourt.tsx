@@ -3,9 +3,9 @@
 
 import * as pc from "playcanvas";
 import { Application, Entity } from "@playcanvas/react";
-import { Camera, GSplat, Script } from "@playcanvas/react/components";
+import { Camera, GSplat, Script, Environment } from "@playcanvas/react/components";
 import { OrbitControls } from "@playcanvas/react/scripts";
-import { useSplat } from "@playcanvas/react/hooks";
+import { useSplat, useAsset } from "@playcanvas/react/hooks";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Credits from "../components/Credits";
 import FPSCounterScript from "../scripts/FPSCounterScript";
@@ -66,6 +66,7 @@ function Loader({ progress }) {
 /* ------------------------ Splat Scene ------------------------ */
 const SplatScene = React.memo(() => {
     const { asset, loading } = useSplat("/clignancourt/clignancourt.sog");
+    const sky = useAsset("/clignancourt/bg-clignancourt.webp", "texture");
     const progress = loading ? 0 : 1;
 
     if (!asset) return <Loader progress={progress} />;
@@ -76,6 +77,10 @@ const SplatScene = React.memo(() => {
             <Loader progress={progress} />
             <Entity name="splat" position={[0, 0, 0]} rotation={[180, -3, 0]}>
                 <GSplat asset={asset} />
+            </Entity>
+
+            <Entity name="skybox">
+                <Environment skybox={sky.asset} skyboxIntensity={1.25} exposure={1} />
             </Entity>
 
             {/* 🎯 FPS Counter */}
@@ -153,12 +158,12 @@ export default function Clignancourt() {
                 >
                     {/* 📷 Camera avec OrbitControls et AutoRotator */}
                     <Entity name="camera" position={[0.75, 1, -1.25]}>
-                        <Camera fov={62} clearColor="black" />
+                        <Camera fov={50} clearColor="black" />
 
                         <OrbitControls
                             ref={orbitRef}
                             distance={4}
-                            distanceMin={0.25}
+                            distanceMin={2}
                             distanceMax={8}
                             pitchAngleMin={9}
                             pitchAngleMax={50}
