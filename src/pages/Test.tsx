@@ -68,7 +68,7 @@ function Loader({ progress }) {
 /* ------------------------ Splat Scene ------------------------ */
 const SplatScene = React.memo(() => {
     const { asset, loading } = useSplat("/vrac/scene-test.sog");
-    const sky = useAsset("/vrac/bg-test.webp", "texture");
+    const sky = useAsset("/vrac/bg-test1.jpg", "texture");
     const progress = loading ? 0 : 1;
 
     if (!asset) return <Loader progress={progress} />;
