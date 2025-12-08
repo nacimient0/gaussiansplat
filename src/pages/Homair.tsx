@@ -158,19 +158,23 @@ export default function Homair() {
                 >
                     {/* 📷 Camera avec OrbitControls et AutoRotator */}
                     <Entity name="camera" position={[0.15, -1, 0.1]}>
-                        <Camera fov={50} clearColor="black" />
-
+                        <Camera fov={55} clearColor="black" />
                         <OrbitControls
                             ref={orbitRef}
                             distance={2}
                             distanceMin={1.5}
-                            distanceMax={3}
+                            distanceMax={5}
                             pitchAngleMin={15}
                             pitchAngleMax={50}
-                            inertiaFactor={0.15}
+                            inertiaFactor={0.10}
                             enabled={!autoRotate}
-                            mouse={{ pan: false }}
-                            touch={{ pan: false }}
+                            mouse={{
+                                distanceSensitivity: 0.5
+                            }}
+                            touch={{
+                                pan: false,
+                                distanceSensitivity: 0.5
+                            }}
                         />
 
                         {/* 🔄 AutoRotator */}
