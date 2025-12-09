@@ -1,13 +1,13 @@
 import { Script, Entity, Vec3 } from "playcanvas";
 
 export class LerpAndSlerpCamera extends Script {
-    static scriptName = "LerpAndSlerpCamera";    pointNames: string[] = [];
+    static scriptName = "LerpAndSlerpCamera"; pointNames: string[] = [];
     duration = 2.0;
     lookAtX = 0;
     lookAtY = 0;
     lookAtZ = 0;
-    fovStart = 62;
-    fovEnd = 62;
+    fovStart = 55;
+    fovEnd = 55;
 
     private _points: Entity[] = [];
     private _currentIndex = 0;
@@ -17,8 +17,8 @@ export class LerpAndSlerpCamera extends Script {
     private _orbit: unknown = null;
     private _startPos = new Vec3();
     private _endPos = new Vec3();
-    private _startFov = 62;
-    private _endFov = 62;
+    private _startFov = 55;
+    private _endFov = 55;
     initialize() {
         console.log("[LerpAndSlerpCamera] Initialize avec", this.pointNames.length, "points");
 
@@ -51,10 +51,10 @@ export class LerpAndSlerpCamera extends Script {
             .filter(p => p !== null);
 
         console.log("[LerpAndSlerpCamera]", this._points.length, "/", this.pointNames.length, "points trouves");
-    }    private _ease(t: number) {
+    } private _ease(t: number) {
         // Easing smoothstep plus fluide
         return t * t * t * (t * (t * 6 - 15) + 10); // smootherstep
-    }goToPoint(index: number) {
+    } goToPoint(index: number) {
         if (this._points.length === 0) {
             console.error("[LerpAndSlerpCamera] Impossible: aucun point!");
             return;
@@ -68,7 +68,7 @@ export class LerpAndSlerpCamera extends Script {
         if (index === this._currentIndex) {
             console.log("[LerpAndSlerpCamera] Deja au point", index);
             return;
-        }        console.log("[LerpAndSlerpCamera] Transition", this._currentIndex, "->", index);
+        } console.log("[LerpAndSlerpCamera] Transition", this._currentIndex, "->", index);
 
         // ✅ NE PLUS désactiver OrbitControls (ancien code fonctionnait sans)
         // On laisse OrbitControls actif et on le synchronise en continu
@@ -76,7 +76,7 @@ export class LerpAndSlerpCamera extends Script {
         // Sauvegarder la position ET le FOV actuels de la caméra
         this._startPos.copy(this.entity.getPosition());
         this._endPos.copy(this._points[index].getPosition());
-        
+
         const cam = this.entity.camera;
         if (cam) {
             this._startFov = cam.fov;
@@ -123,7 +123,7 @@ export class LerpAndSlerpCamera extends Script {
         // Log progression
         if (Math.floor(this._time * 2) !== Math.floor((this._time - dt) * 2)) {
             console.log(`[LerpAndSlerpCamera] ${(t * 100).toFixed(0)}%`);
-        }        const curPos = new Vec3().lerp(this._startPos, this._endPos, k);
+        } const curPos = new Vec3().lerp(this._startPos, this._endPos, k);
         this.entity.setPosition(curPos);
         this.entity.lookAt(this.lookAtX, this.lookAtY, this.lookAtZ);
 
@@ -131,7 +131,8 @@ export class LerpAndSlerpCamera extends Script {
         const cam = this.entity.camera;
         if (cam) {
             cam.fov = this._startFov + (this._endFov - this._startFov) * k;
-        }        // ✅ SYNCHRONISER OrbitControls EN CONTINU pendant l'animation
+        }
+        // ✅ SYNCHRONISER OrbitControls EN CONTINU pendant l'animation
         if (this._orbit && typeof this._orbit === 'object') {
             const orbit = this._orbit as Record<string, unknown>;
             const pivot = new Vec3(this.lookAtX, this.lookAtY, this.lookAtZ);
@@ -155,7 +156,7 @@ export class LerpAndSlerpCamera extends Script {
                     orbit.update(0);
                 }
             }
-        }if (t >= 1) {
+        } if (t >= 1) {
             this._active = false;
             this._time = 0;
             this._currentIndex = this._targetIndex;
