@@ -140,7 +140,9 @@ export default function Homair() {
                 pdf.removeEventListener("keydown", handleKeyDown);
             }
         };
-    }, [pdfRef]);    // Capture d'écran en image PNG
+    }, [pdfRef]);
+
+    // Capture d'écran en image PNG
     const downloadImage = () => {
         const input = pdfRef.current;
         html2canvas(input).then((canvas) => {
@@ -172,6 +174,7 @@ export default function Homair() {
             }, DURATION * 1000);
         }
     };
+
     // Aller au point suivant (navigation circulaire)
     const goNext = () => {
         if (cameraScriptRef.current && !isTransitioning) {
