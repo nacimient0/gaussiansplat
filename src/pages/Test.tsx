@@ -14,7 +14,6 @@ import FPSCounterScript from "../scripts/FPSCounterScript";
 import Credits from "../components/Credits";
 import Fullscreen from "../components/Fullscreen";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 
 /* ------------------------------ Loader ------------------------------ */
 function Loader({ progress }) {
@@ -124,12 +123,13 @@ export default function Test() {
     const cameraPoints = [
         { name: "point0", position: [-3.5, 1.75, 0], fov: 62 },
         { name: "point1", position: [-1.35, 0.15, 1.8], fov: 62 },
-        { name: "point2", position: [0.5, 1.25, -2.5], fov: 62 },
-        { name: "point3", position: [2.5, 0.5, 0.5], fov: 62 },
-        { name: "point4", position: [1.0, 2.0, -4.0], fov: 62 },
-        { name: "point5", position: [-2.0, 1.0, -1.0], fov: 62 },
+        { name: "point2", position: [0.25, 0.75, 2], fov: 62 },
+        { name: "point3", position: [2, 1, 2], fov: 62 },
+        { name: "point4", position: [3.5, 1.75, 0], fov: 62 },
+        { name: "point5", position: [2, 1.25, -2], fov: 62 },
+        { name: "point6", position: [0.25, 0.75, -2], fov: 62 },
     ];
-    const DURATION = 5.0;
+    const DURATION = 1.0;
 
     const [currentPoint, setCurrentPoint] = useState(0);
     const [isTransitioning, setIsTransitioning] = useState(false);
@@ -187,27 +187,24 @@ export default function Test() {
         };
     }, []);
 
-    const downloadPDF = () => {
+    // Capture d'écran en image PNG
+    const downloadImage = () => {
         const input = pdfRef.current;
         html2canvas(input).then((canvas) => {
+            // Convertir le canvas en image
             const imgData = canvas.toDataURL("image/png");
-            const pdf = new jsPDF("l", "mm", "a4", true);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-            const imgX = (pdfWidth - imgWidth * ratio) / 2;
-            const imgY = (pdfHeight - imgHeight * ratio) / 2;
-            pdf.addImage(
-                imgData,
-                "PNG",
-                imgX,
-                imgY,
-                imgWidth * ratio,
-                imgHeight * ratio
-            );
-            pdf.save(`test.pdf`);
+
+            // Créer un nom de fichier avec date lisible (YYYYMMDD_HHMMSS)
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 19).replace(/[-:T]/g, '').slice(0, 8); // YYYYMMDD
+            const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, ''); // HHMMSS
+            const filename = `homair_${dateStr}_${timeStr}.png`;
+
+            // Créer un lien de téléchargement
+            const link = document.createElement("a");
+            link.href = imgData;
+            link.download = filename;
+            link.click();
         });
     };
 
@@ -300,11 +297,6 @@ export default function Test() {
                             script={LerpAndSlerpCamera}
                             pointNames={cameraPoints.map(p => p.name)}
                             duration={DURATION}
-                            lookAtX={0}
-                            lookAtY={0}
-                            lookAtZ={0}
-                            fovStart={62}
-                            fovEnd={62}
                         />
 
                         {/* OrbitControls toujours monte, mais desactive par le script pendant transition */}
@@ -317,8 +309,13 @@ export default function Test() {
                             pitchAngleMax={50}
                             inertiaFactor={0.15}
                             enabled={!autoRotate}
-                            mouse={{ pan: false }}
-                            touch={{ pan: false }}
+                            mouse={{
+                                distanceSensitivity: 0.5
+                            }}
+                            touch={{
+                                pan: false,
+                                distanceSensitivity: 0.5
+                            }}
                         />
 
                         <Script
@@ -357,10 +354,12 @@ export default function Test() {
                     </div>
                 )}
             </div>
-            {/* Bouton PDF */}
+
+            {/* Bouton Image */}
             <button
                 className="button-controls absolute top-18 left-4 z-[1000] p-3 rounded-full md:top-20"
-                onClick={downloadPDF}
+                onClick={downloadImage}
+                title="Télécharger une capture d'écran"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -376,23 +375,22 @@ export default function Test() {
                 <Credits />
                 <div className="flex items-center justify-center flex-col h-full gap-2 text-white text-3xl">
                     <div className="flex gap-2">
-                        {/* Bouton Precedent */}
-                        {currentPoint > 0 && (
-                            <button
-                                onClick={goPrevious}
-                                className="button-controls hover:scale-110 transition-transform"
-                                disabled={isTransitioning}
+                        {/* Bouton Precedent - TOUJOURS visible (navigation circulaire) */}
+                        <button
+                            onClick={goPrevious}
+                            className="button-controls hover:scale-110 transition-transform disabled:opacity-50"
+                            disabled={isTransitioning}
+                            title={`Aller au point ${(currentPoint - 1 + cameraPoints.length) % cameraPoints.length}`}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                height={40}
+                                width={40}
+                                viewBox="0 -960 960 960"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    height={40}
-                                    width={40}
-                                    viewBox="0 -960 960 960"
-                                >
-                                    <path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z" />
-                                </svg>
-                            </button>
-                        )}
+                                <path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z" />
+                            </svg>
+                        </button>
 
                         {/* bouton play/pause autorotate */}
                         <button
@@ -420,23 +418,22 @@ export default function Test() {
                             )}
                         </button>
 
-                        {/* Bouton Suivant */}
-                        {currentPoint < cameraPoints.length - 1 && (
-                            <button
-                                onClick={goNext}
-                                className="button-controls hover:scale-110 transition-transform"
-                                disabled={isTransitioning}
+                        {/* Bouton Suivant - TOUJOURS visible (navigation circulaire) */}
+                        <button
+                            onClick={goNext}
+                            className="button-controls hover:scale-110 transition-transform disabled:opacity-50"
+                            disabled={isTransitioning}
+                            title={`Aller au point ${(currentPoint + 1) % cameraPoints.length}`}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                height={40}
+                                width={40}
+                                viewBox="0 -960 960 960"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    height={40}
-                                    width={40}
-                                    viewBox="0 -960 960 960"
-                                >
-                                    <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" />
-                                </svg>
-                            </button>
-                        )}
+                                <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" />
+                            </svg>
+                        </button>
                     </div>
                     {/* Indicateur de points (optionnel) */}
                     <div className="flex gap-2">

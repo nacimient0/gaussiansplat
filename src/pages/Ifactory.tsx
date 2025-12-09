@@ -12,7 +12,6 @@ import { SimpleAutoRotator } from "../scripts/SimpleAutoRotator";
 import Credits from "../components/Credits";
 import Fullscreen from "../components/Fullscreen";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 
 /* ------------------------------ Loader ------------------------------ */
 function Loader({ progress }) {
@@ -145,30 +144,27 @@ export default function Ifactory() {
     };
   }, [pdfRef]);
 
-  // PDF capture
-  const downloadPDF = () => {
+  // Capture d'écran en image PNG
+  const downloadImage = () => {
     const input = pdfRef.current;
     html2canvas(input).then((canvas) => {
+      // Convertir le canvas en image
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("l", "mm", "a4", true);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = (pdfHeight - imgHeight * ratio) / 2;
-      pdf.addImage(
-        imgData,
-        "PNG",
-        imgX,
-        imgY,
-        imgWidth * ratio,
-        imgHeight * ratio
-      );
-      pdf.save(`ifactory.pdf`);
+
+      // Créer un nom de fichier avec date lisible (YYYYMMDD_HHMMSS)
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 19).replace(/[-:T]/g, '').slice(0, 8); // YYYYMMDD
+      const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, ''); // HHMMSS
+      const filename = `ifactory_${dateStr}_${timeStr}.png`;
+
+      // Créer un lien de téléchargement
+      const link = document.createElement("a");
+      link.href = imgData;
+      link.download = filename;
+      link.click();
     });
   };
+
   // Aller vers un point specifique
   const goToPoint = (index: number) => {
     if (cameraScriptRef.current) {
@@ -249,7 +245,9 @@ export default function Ifactory() {
               name={point.name}
               position={point.position}
             />
-          ))}          {/* camera - Position initiale au point0 */}
+          ))}
+
+          {/* camera - Position initiale au point0 */}
           <Entity name="camera" ref={cameraRef} position={cameraPoints[0].position}>
             <Camera fov={cameraPoints[0].fov} clearColor="black" />
             <Script
@@ -257,11 +255,6 @@ export default function Ifactory() {
               script={LerpAndSlerpCamera}
               pointNames={cameraPoints.map(p => p.name)}
               duration={DURATION}
-              lookAtX={0}
-              lookAtY={0}
-              lookAtZ={0}
-              fovStart={62}
-              fovEnd={62}
             />
 
             {/* OrbitControls toujours monte, mais desactive par le script pendant transition */}
@@ -274,8 +267,13 @@ export default function Ifactory() {
               pitchAngleMax={50}
               inertiaFactor={0.15}
               enabled={!autoRotate}
-              mouse={{ pan: false }}
-              touch={{ pan: false }}
+              mouse={{
+                distanceSensitivity: 0.5
+              }}
+              touch={{
+                pan: false,
+                distanceSensitivity: 0.5
+              }}
             />
 
             {/* AutoRotator TOUJOURS monte maintenant */}
@@ -294,10 +292,11 @@ export default function Ifactory() {
         </Application>
       </div>
 
-      {/* Bouton PDF */}
+      {/* Bouton Image */}
       <button
         className="button-controls absolute top-18 left-4 z-[1000] p-3 rounded-full md:top-20"
-        onClick={downloadPDF}
+        onClick={downloadImage}
+        title="Télécharger une capture d'écran"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -308,6 +307,7 @@ export default function Ifactory() {
           <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
         </svg>
       </button>
+
 
       {/* HUD bas */}
       <div className="fixed bottom-0 left-0 w-full bg-gradient-to-b from-transparent to-black h-[10vh] p-8 z-[1000]">
