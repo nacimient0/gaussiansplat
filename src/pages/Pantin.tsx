@@ -8,11 +8,9 @@ import { OrbitControls } from "@playcanvas/react/scripts";
 import { useSplat, useAsset } from "@playcanvas/react/hooks";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Credits from "../components/Credits";
-import FPSCounterScript from "../scripts/FPSCounterScript";
 import SimpleAutoRotator from "../scripts/SimpleAutoRotator";
 import Fullscreen from "../components/Fullscreen";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 
 /* ------------------------------ Loader ------------------------------ */
 function Loader({ progress }) {
@@ -75,18 +73,13 @@ const SplatScene = React.memo(() => {
         <>
 
             <Loader progress={progress} />
-            <Entity name="splat" position={[0, 0, 0]} rotation={[180, 0, 0]}>
+            <Entity name="splat" position={[0, 0, 0]} rotation={[180, -90, 0]}>
                 <GSplat asset={asset} />
             </Entity>
 
             <Entity name="skybox">
                 <Environment skybox={sky.asset} skyboxIntensity={1.25} exposure={1} />
             </Entity>
-
-            {/* 🎯 FPS Counter */}
-            {/* <Entity name="fps-counter">
-                <Script script={FPSCounterScript} />
-            </Entity> */}
         </>
     );
 });
@@ -110,27 +103,24 @@ export default function Pantin() {
         });
     };
 
-    const downloadPDF = () => {
+    // Capture d'écran en image PNG
+    const downloadImage = () => {
         const input = pdfRef.current;
         html2canvas(input).then((canvas) => {
+            // Convertir le canvas en image
             const imgData = canvas.toDataURL("image/png");
-            const pdf = new jsPDF("l", "mm", "a4", true);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-            const imgX = (pdfWidth - imgWidth * ratio) / 2;
-            const imgY = (pdfHeight - imgHeight * ratio) / 2;
-            pdf.addImage(
-                imgData,
-                "PNG",
-                imgX,
-                imgY,
-                imgWidth * ratio,
-                imgHeight * ratio
-            );
-            pdf.save(`test.pdf`);
+
+            // Créer un nom de fichier avec date lisible (YYYYMMDD_HHMMSS)
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 19).replace(/[-:T]/g, '').slice(0, 8); // YYYYMMDD
+            const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, ''); // HHMMSS
+            const filename = `homair_${dateStr}_${timeStr}.png`;
+
+            // Créer un lien de téléchargement
+            const link = document.createElement("a");
+            link.href = imgData;
+            link.download = filename;
+            link.click();
         });
     };
 
@@ -157,20 +147,25 @@ export default function Pantin() {
                     }}
                 >
                     {/* 📷 Camera avec OrbitControls et AutoRotator */}
-                    <Entity name="camera" position={[-2, 1.75, -1.75]}>
+                    <Entity name="camera" position={[1.25, 1.6, -1.75]}>
                         <Camera fov={50} clearColor="black" />
 
                         <OrbitControls
                             ref={orbitRef}
                             distance={2.5}
-                            distanceMin={0.25}
-                            distanceMax={3}
+                            distanceMin={1.25}
+                            distanceMax={5}
                             pitchAngleMin={5}
                             pitchAngleMax={50}
                             inertiaFactor={0.15}
                             enabled={!autoRotate}
-                            mouse={{ pan: false }}
-                            touch={{ pan: false }}
+                            mouse={{
+                                distanceSensitivity: 0.5
+                            }}
+                            touch={{
+                                pan: false,
+                                distanceSensitivity: 0.5
+                            }}
                         />
 
                         {/* 🔄 AutoRotator */}
@@ -190,10 +185,11 @@ export default function Pantin() {
                 </Application>
             </div>
 
-            {/* Bouton PDF */}
+            {/* Bouton Image */}
             <button
                 className="button-controls absolute top-18 left-4 z-[1000] p-3 rounded-full md:top-20"
-                onClick={downloadPDF}
+                onClick={downloadImage}
+                title="Télécharger une capture d'écran"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
