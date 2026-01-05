@@ -36,11 +36,11 @@ export default function Connected() {
             ) : (
                 <div className="flex gap-4">
                     <Link to="/login" className="font-bold hover:text-blue-500 transition">
-                        LOGIN
+                        SE CONNECTER
                     </Link>
-                    <Link to="/register" className="font-bold hover:text-blue-500 transition">
+                    {/* <Link to="/register" className="font-bold hover:text-blue-500 transition">
                         REGISTER
-                    </Link>
+                    </Link> */}
                 </div>
             )}
         </div>
