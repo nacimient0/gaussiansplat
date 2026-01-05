@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Env from "./pages/Env";
 import Ifactory from "./pages/Ifactory";
 import Test from "./pages/Test";
-import Register from "./pages/Register";
 import Login from "./pages/Login";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -40,7 +39,6 @@ function App() {
               <Env />
             }
           />
-          <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
         </Routes>
       </Router>
