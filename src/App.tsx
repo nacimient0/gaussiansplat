@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Register from "./pages/Register";
 import Login from "./pages/Login";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -26,7 +25,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
         </Routes>
       </Router>

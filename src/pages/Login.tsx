@@ -4,9 +4,10 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-    const [form, setForm] = useState({ email: "", password: "" });
+    const [form, setForm] = useState({ email: "", password: "", project: "clignancourt" });
     const [error, setError] = useState<string | null>(null);
-    const { setToken } = useAuth();
+    const [showPassword, setShowPassword] = useState(false);
+    const { setToken, token } = useAuth();
     const navigate = useNavigate();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,10 +19,7 @@ export default function Login() {
         setError(null);
 
         try {
-            // Étape 1 : obtenir le cookie CSRF
             await api.get("/sanctum/csrf-cookie");
-
-            // Étape 2 : login
             const res = await api.post("/api/login", form);
 
             setToken(res.data.token, res.data.user.id, res.data.user.name);
@@ -54,7 +52,20 @@ export default function Login() {
                 justifyContent: "space-around"
             }}>
                 <div style={{ fontSize: "22px", fontWeight: "bold", textDecoration: "underline" }}>Connexion</div>
-                {/* <img src="ifactory.svg" alt="Logo" style={{ display: "flex", backgroundColor: "white", height: '100px' }} /> */}
+                {token && (
+                    <div style={{
+                        backgroundColor: "rgba(245, 154, 0, 0.2)",
+                        border: "1px solid #F59A00",
+                        borderRadius: "6px",
+                        padding: "12px",
+                        width: "100%",
+                        color: "#F59A00",
+                        fontSize: "14px",
+                        textAlign: "center"
+                    }}>
+                        ℹ️ Vous êtes déjà connecté
+                    </div>
+                )}
                 <form style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }} onSubmit={handleSubmit}>
                     <input className="input-login"
                         type="email"
@@ -64,32 +75,56 @@ export default function Login() {
                         onChange={handleChange}
                         required
                     />
-                    <input className="input-login"
-                        type="password"
-                        name="password"
-                        placeholder="Mot de passe"
-                        value={form.password}
-                        onChange={handleChange}
-                        required
-                    />
+                    <div style={{ position: "relative", width: "100%" }}>
+                        <input className="input-login"
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            placeholder="Mot de passe"
+                            value={form.password}
+                            onChange={handleChange}
+                            required
+                            style={{ width: "100%", paddingRight: "40px", marginBottom: 0 }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{
+                                position: "absolute",
+                                right: "12px",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                padding: "0",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "white",
+                                height: "20px",
+                                width: "20px",
+                            }}
+                        >
+                            {showPassword ? (
+                                // Icône œil barré (masquer)
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            ) : (
+                                // Icône œil (afficher)
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            )}
+                        </button>
+                    </div>
                     {error && <p style={{ color: "red" }}>{error}</p>}
                     <div style={{ display: "flex", justifyContent: "center" }}>
                         <button style={{ display: "flex", cursor: "pointer", backgroundColor: "#F59A00", padding: "10px 20px", borderRadius: "4px", textShadow: "0 0 5px black" }} type="submit">Se connecter</button>
                     </div>
                 </form>
-                <p style={{ fontSize: "14px", textAlign: "center" }}>
-                    Pas encore de compte ?{" "}
-                    <a
-                        href="/register"
-                        style={{
-                            color: "#F59A00",
-                            textDecoration: "underline",
-                            fontWeight: "bold",
-                        }}
-                    >
-                        S'inscrire
-                    </a>
-                </p>
             </div>
         </div >
     );
